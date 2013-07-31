@@ -16,7 +16,7 @@ def make_table(img, width, height):
 
 
 def first_column_with_pixel_color(color, start, width, height):
-	img = PIL.Image.open('bw.png')
+	img = PIL.Image.open('temp.png')
 	pixels = img.load()
 
 	for x in range(start, width): # x is the column 
@@ -59,10 +59,11 @@ def scan_image(width, height):
 
 
 def main():
-	imgname = 'bw.png'
+	imgname = 'helv_A.png'
 	img = PIL.Image.open(imgname)
 	if img.mode != '1':
 		img = img.convert('1')
+	img.save('temp.png')
 	width = img.size[0]
 	height = img.size[1]
 	pixels = img.load()
