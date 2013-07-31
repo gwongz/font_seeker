@@ -2,21 +2,6 @@ import PIL
 from SimpleCV import Image, Color
 
 
-
-def make_table(img, width, height, pixelMap):
-	"""Creates image grid with y columns and x rows"""
-
-	table = [[ 0 for y in range(width)] for x in range(height) ]
-	# populates table with pixel values of img
-	for y in range(width):
-		for x in range(height):
-			table[x][y] = pixelMap[y, x]
-
-	return table
-
-# table = make_table('rockwell_a.png')
-# print table
-
 def first_column_with_pixel_color(color, start, width, height, table):
 	for y in range(start, width):
 		for x in range(height):
@@ -41,7 +26,7 @@ def scan_image(width, height, table):
 	print "This is initialized starting_col", starting_col
 
 
-	while starting_col < width:	
+	while starting_col != None:	
 		print "This is starting_col at top", starting_col
 		print "This is looking_for at top", looking_for
 		
@@ -62,24 +47,34 @@ def scan_image(width, height, table):
 		print "This is looking_for at bottom ", looking_for	
 		
 
-	print boundaries
+	slices = [(x, 0) for x in boundaries if x!= None] # a list of tuples 
+	
+	return slices 
 
 
+def main():
+	imgname = 'rockwell_a.png'
+	img = PIL.Image.open(imgname)
+	if img.mode != '1':
+		img = img.convert('1')
+	table = img.load()
+	width = img.size[0]
+	height = img.size[1]
+	# print width
+	# print height
 
 
+	slices = scan_image(width, height, table)
 
-# # bounds = scan_image(table)
-# print bounds 
+  
 
-# # x coordinate but y column in table 
-# slices = [(x, 0) for x in bounds if x!= None] # a list of tuples 
+if __name__ == "__main__":
+	main()
+
+ 
 
 
-
-
-# # after getting slices - crop each image according to slices and save 
-# # to database or temp? 
-# def get_letter(img, slices):
+ # def get_letter(img, slices):
 # 	"""Crops image at slices coordinates and saves"""
 # 	# opens cropped image 
 # 	img = PIL.Image.open(img)
@@ -105,39 +100,14 @@ def scan_image(width, height, table):
 
 # letter = get_letter('rockwell_a.png', slices)
 
-def process_letter(img): # takes segmented letter as input
-	"""Crops segmented letter so it is optimized for matching"""
-	img = Image(img)
-	binarize = img.binarize() # SimpleCV img class
-	blobs = img.findBlobs() # uses SimpleCV blobs fcn
-	bounds = blobs[-1].boundingBox() # SimpleCV fcn
-	img = img.crop(bounds)
-	img.save('user_img.png') # returns a cropped image object 
+# def process_letter(img): # takes segmented letter as input
+# 	"""Crops segmented letter so it is optimized for matching"""
+# 	img = Image(img)
+# 	binarize = img.binarize() # SimpleCV img class
+# 	blobs = img.findBlobs() # uses SimpleCV blobs fcn
+# 	bounds = blobs[-1].boundingBox() # SimpleCV fcn
+# 	img = img.crop(bounds)
+# 	img.save('user_img.png') # returns a cropped image object 
 
-
-
-def main():
-	imgname = 'rockwell_a.png'
-	img = PIL.Image.open(imgname)
-	if img.mode != '1':
-		img = img.convert('1')
-	table = img.load()
-	width = img.size[0]
-	height = img.size[1]
-	# print width
-	# print height
-
-
-	scan = scan_image(width, height, table)
-
-  
-
-if __name__ == "__main__":
-	main()
-
- 
-
-
- 
 
 
