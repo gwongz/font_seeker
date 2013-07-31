@@ -9,22 +9,22 @@ def make_table(img, width, height):
 	# populates table with pixel values of img
 	for y in range(width):
 		for x in range(height):
-			table[x][y] = pixelMap[y, x]
+			table[x][y] = pixels[x, y]
 
 	return table
-
+	# this does same thing as 
 
 
 def first_column_with_pixel_color(color, start, width, height, pixels):
 	
 
-	for y in range(start, width):
-		for x in range(height):
+	for x in range(start, width): # x is the column 
+		for y in range(height):
 
 			cpixel = pixels[x,y]
 			if cpixel == color:
-				# y is column number 
-				return y 
+				# x is column number 
+				return x 
 
 	return None
 
@@ -70,6 +70,8 @@ def main():
 		for y in range(height):
 			cpixel = pixels[x,y]
 			all_pixels.append(cpixel)
+
+	cpixel = pixels[x,y]
 
 	bounds = scan_image(width, height, pixels)
 	print bounds 
