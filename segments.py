@@ -2,17 +2,17 @@ import PIL
 from SimpleCV import Image, Color
 
 
-def make_table(img, width, height):
-	"""Creates image grid with y columns and x rows"""
+# def make_table(img, width, height):
+# 	"""Creates image grid with y columns and x rows"""
 
-	table = [[ 0 for y in range(width)] for x in range(height) ]
-	# populates table with pixel values of img
-	for y in range(width):
-		for x in range(height):
-			table[x][y] = pixels[x, y]
+# 	table = [[ 0 for y in range(width)] for x in range(height) ]
+# 	# populates table with pixel values of img
+# 	for y in range(width):
+# 		for x in range(height):
+# 			table[x][y] = pixels[x, y]
 
-	return table
-	# this does same thing as 
+# 	return table
+	
 
 
 def first_column_with_pixel_color(color, start, width, height, imgname):
@@ -29,34 +29,50 @@ def first_column_with_pixel_color(color, start, width, height, imgname):
 
 	return None
 
-# test prints 		
-# first = first_column_with_pixel_color(0, 0)
-# second = first_column_with_pixel_color(255, first)
-# third = first_column_with_pixel_color(0, second)
-# print first, second, third
-
 
 def scan_image(width, height, imgname):
 	"""Finds columns where image should be segmented"""
 	looking_for = 0 # first look for black
-	starting_col = 0 # start with first column
+	current_col = 0 # start with first column
 	boundaries = []
 
-	while starting_col != None:
+	flag = 0
 
-		next_col = first_column_with_pixel_color(looking_for, starting_col, width, height, imgname)
+	
+
+	while current_col != None:
+
+
+
+		next_col = first_column_with_pixel_color (looking_for, current_col, width, height, imgname)
+		print "Color found in column - ", next_col
 		if next_col == None:
 			break
+
 		if next_col != None:
 			boundaries.append(next_col)
 		# if next_col == looking_for: # if you found black in first iteration, start looking for white
+			
+		if next_col == 0:
 			looking_for = 255
+			current_col = next_col
 
-		else: 
+		elif looking_for == 255: 
 			looking_for = 0	
+			current_col = next_col + 1
+		else:
+			looking_for = 255
+			current_col = next_col + 1
 
+		print "Current column= ", current_col
+		print "Looking for color = ", looking_for
 
-		starting_col = next_col 
+		# if current_col == 14:
+		# 	flag += 1
+
+		# if flag == 10:
+		# 	break
+
 
 
 	return boundaries
@@ -64,7 +80,7 @@ def scan_image(width, height, imgname):
 
 
 def main():
-	imgname = 'test.png'
+	imgname = 'temp.png'
 	img = PIL.Image.open(imgname)
 	if img.mode != '1':
 		img = img.convert('1')
