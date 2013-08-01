@@ -15,8 +15,8 @@ def make_table(img, width, height):
 	# this does same thing as 
 
 
-def first_column_with_pixel_color(color, start, width, height):
-	img = PIL.Image.open('temp.png')
+def first_column_with_pixel_color(color, start, width, height, imgname):
+	img = PIL.Image.open(imgname)
 	pixels = img.load()
 
 	for x in range(start, width): # x is the column 
@@ -36,7 +36,7 @@ def first_column_with_pixel_color(color, start, width, height):
 # print first, second, third
 
 
-def scan_image(width, height):
+def scan_image(width, height, imgname):
 	"""Finds columns where image should be segmented"""
 	looking_for = 0 # first look for black
 	starting_col = 0 # start with first column
@@ -44,13 +44,18 @@ def scan_image(width, height):
 
 	while starting_col != None:
 
-		next_col = first_column_with_pixel_color(looking_for, starting_col, width, height)
+		next_col = first_column_with_pixel_color(looking_for, starting_col, width, height, imgname)
+		if next_col == None:
+			break
 		if next_col != None:
 			boundaries.append(next_col)
-		if next_col == 0: # if you found black in first iteration, start looking for white
+		# if next_col == looking_for: # if you found black in first iteration, start looking for white
 			looking_for = 255
-		else:
+
+		else: 
 			looking_for = 0	
+
+
 		starting_col = next_col 
 
 
@@ -59,11 +64,11 @@ def scan_image(width, height):
 
 
 def main():
-	imgname = 'helv_A.png'
+	imgname = 'test.png'
 	img = PIL.Image.open(imgname)
 	if img.mode != '1':
 		img = img.convert('1')
-	img.save('temp.png')
+	# img.save('temp.png')
 	width = img.size[0]
 	height = img.size[1]
 	pixels = img.load()
@@ -75,7 +80,7 @@ def main():
 
 	
 
-	bounds = scan_image(width, height)
+	bounds = scan_image(width, height, imgname)
 	print bounds 
 
 if __name__== "__main__":
