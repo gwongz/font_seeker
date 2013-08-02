@@ -63,6 +63,7 @@ def all_white(width, height, columns, current_col):
 
 
 def scan_image(width, height, columns):
+	"""Finds vertical project of image"""
 	boundaries = []
 	current_col = 0
 
@@ -70,9 +71,7 @@ def scan_image(width, height, columns):
 		
 		
 		next_col = first_black(width, height, columns, current_col)
-		
-		print "This is next_col after finding first black", next_col
-		
+	
 		if next_col == None:
 			break # there is no black - prevents infinite loop 
 
@@ -85,14 +84,11 @@ def scan_image(width, height, columns):
 				boundaries.append(white_col)
 				current_col = white_col # reset starting point for scanning
 
-		print "Boundaries at bottom of while loop", boundaries
-		print "current_col at bottom of while loop", current_col
-
 	# slices = [(x, 0) for x in boundaries if x!= None] # a list of tuples, (x,y) where splits are 
 	
 	return boundaries
 
-def get_letter(slices, height, img):
+def get_letters(slices, height, img):
 	# slices = [(0,0), (1,0)]
 	# slices = [(35,0), (67,0)]
 	
@@ -113,22 +109,15 @@ def get_letter(slices, height, img):
 			letter = img.crop(box)
 			letter.save(output) # saves image to current directory as 'letter'			
 		
-			n += 2
+			n += 2 # increment by 2 because each pair is a set of bounds
 
 		else:
 			break
 
-	return segments # returns list of all the cropped segments 
- 		# left = slices[n]
-		# top = 0 	
-		# box = (left, top, left+width, top+height)
-		# width = slices[1][0] - slices[0][0]
-		# width = 1-0 = 1
-		# if 1 <= 1: True 
-		# print "This is item[n]: ", item[n]
-		# box = (item[n], 0, width, height-1)
-		# # print box
-		# print "Box at the top of the loop:", box 
+	return segments # returns list of all the cropped and segmented imgs
+
+### Should I add function to find horizontal projection? 
+ 		
 
 
 def main():
@@ -143,8 +132,8 @@ def main():
 	img = img_width_height_columns[3]
 
 	y_bounds = scan_image(width, height, columns)
-	segments = get_letter(y_bounds, height, img)
-	print segments
+	segments = get_letters(y_bounds, height, img)
+	# segments is a list of all the cropped segments
 
 
 
