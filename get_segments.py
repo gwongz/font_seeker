@@ -17,7 +17,7 @@ def load_image(imgname):
 	for y in range(height):
 		columns.append([pixels[y,x] for x in range(width)])
 
-	return width, height, columns
+	return width, height, columns, img
 
 # def get_image_grid(imgname):
 # 	pixels = img.load()
@@ -88,57 +88,47 @@ def scan_image(width, height, columns):
 		print "Boundaries at bottom of while loop", boundaries
 		print "current_col at bottom of while loop", current_col
 
-	slices = [(x, 0) for x in boundaries if x!= None] # a list of tuples, (x,y) where splits are 
+	# slices = [(x, 0) for x in boundaries if x!= None] # a list of tuples, (x,y) where splits are 
 	
-	return slices
+	return boundaries
 
-def get_letter(slices, height, imgname):
+def get_letter(slices, height, img):
 	# slices = [(0,0), (1,0)]
 	# slices = [(35,0), (67,0)]
-
-
-
-
-	n=0
 	
-	while n < len(slices)-1:
-		print "This is n at the start: ", n
-		for item in slices:
-			print "This is n at the top of for loop: ", n
-			print "This is the item at the top of loop: ", item
-			# print "Item[n]: ", item[n]
-			# print "Item[n+1]: ", item[n+1]
-			width = (slices[n+1][0]) - (slices[n][0]) # width of each crop
-			# print "Width: ", width
-			print "Width at top of loop for n: ", width, n 
+	segments = [] 
+	n=0
 
+	for item in slices:
+		if n <= len(slices)-1: 
+			width = slices[n+1] - slices[n] # width of each crop
+			left = slices[n]
+			top = 0 
+			box = (left, top, left+width, top+height)
 			
-			# width = slices[1][0] - slices[0][0]
-			# width = 1-0 = 1
 
-			# if 1 <= 1: True 
+			output = 'user_crop%s.png' % (n)
+			segments.append(output)
 
-			# print "This is item[n]: ", item[n]
-			box = (item[n], item[n+1], width, height)
-			# print box
-			print "Box at the top of the loop:", box 
-			if n+1 <= len(slices)-1: 
-				
-			
-				img = PIL.Image.open(imgname) # how can I avoid reopening the img?
-				if img.mode != '1':
-					img.convert('1')
-				letter = img.crop(box)
-				letter.save('user_crop.png') # saves image to current directory as 'letter'
-			
-				n += 2
+			letter = img.crop(box)
+			letter.save(output) # saves image to current directory as 'letter'			
+		
+			n += 2
 
-				if n > len(slices)-1:
-					break
+		else:
+			break
 
-			else:
-				break
-
+	return segments # returns list of all the cropped segments 
+ 		# left = slices[n]
+		# top = 0 	
+		# box = (left, top, left+width, top+height)
+		# width = slices[1][0] - slices[0][0]
+		# width = 1-0 = 1
+		# if 1 <= 1: True 
+		# print "This is item[n]: ", item[n]
+		# box = (item[n], 0, width, height-1)
+		# # print box
+		# print "Box at the top of the loop:", box 
 
 
 def main():
@@ -150,11 +140,12 @@ def main():
 	width = img_width_height_columns[0]
 	height = img_width_height_columns[1]
 	columns = img_width_height_columns[2]
+	img = img_width_height_columns[3]
 
-	slices = scan_image(width, height, columns)
-	print "These are the bounds", slices 
+	y_bounds = scan_image(width, height, columns)
+	segments = get_letter(y_bounds, height, img)
+	print segments
 
-	get_letter(slices, height, imgname)
 
 
 
