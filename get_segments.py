@@ -1,10 +1,10 @@
 from sys import argv
-import PIL
+from PIL import Image
 
 """Segments image into individual characters"""
 
 def load_image(imgname):
-	img = PIL.Image.open(imgname)
+	img = Image.open(imgname)
 	if img.mode != '1':
 		img = img.convert('1')
 
