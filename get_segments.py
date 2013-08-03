@@ -1,8 +1,7 @@
 from sys import argv
 import PIL
-from SimpleCV import Image
 
-"""Takes image and finds boundaries where it needs to be cropped"""
+"""Segments image into individual characters"""
 
 def load_image(imgname):
 	img = PIL.Image.open(imgname)
@@ -44,18 +43,16 @@ def first_black(width, height, columns, current_col):
 	
 	while current_col < width:
 		if columns[current_col].count(0) >= 1:
-		
 			return current_col	
 		else:
 			current_col +=1
 		
 	
 def all_white(width, height, columns, current_col):
-	while current_col < width:
-		
+	
+	while current_col < width:	
 		if columns[current_col].count(255) == width:
 			return current_col
-
 		else:
 			current_col +=1
 
@@ -71,7 +68,6 @@ def scan_image(width, height, columns):
 		
 		
 		next_col = first_black(width, height, columns, current_col)
-	
 		if next_col == None:
 			break # there is no black - prevents infinite loop 
 
@@ -85,7 +81,6 @@ def scan_image(width, height, columns):
 				current_col = white_col # reset starting point for scanning
 
 	# slices = [(x, 0) for x in boundaries if x!= None] # a list of tuples, (x,y) where splits are 
-	
 	return boundaries
 
 def get_letters(slices, height, img):
@@ -97,6 +92,7 @@ def get_letters(slices, height, img):
 
 	for item in slices:
 		if n <= len(slices)-1: 
+			
 			width = slices[n+1] - slices[n] # width of each crop
 			left = slices[n]
 			top = 0 
@@ -116,9 +112,7 @@ def get_letters(slices, height, img):
 
 	return segments # returns list of all the cropped and segmented imgs
 
-### Should I add function to find horizontal projection? 
- 		
-
+# should add function to get x bounds
 
 def main():
 	script, input_file = argv
@@ -134,8 +128,6 @@ def main():
 	y_bounds = scan_image(width, height, columns)
 	segments = get_letters(y_bounds, height, img)
 	# segments is a list of all the cropped segments
-
-
 
 
 if __name__== "__main__":
