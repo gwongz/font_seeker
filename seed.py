@@ -1,4 +1,4 @@
-"""Loads fonts from local directory into database"""
+"""Loads fonts from local directory ('templates' and 'training_alphabet') into database"""
  
 import os 
 import re 
@@ -6,10 +6,10 @@ from SimpleCV import Image
 import model 
 
 
+
 def get_templates(directory):
 
 	templates_dict = {}
-
 	# looks for .png sample files in fonts directory and appends to dict by letter 
 	for dirpath, dirnames, fnames in os.walk(directory):
 	    for f in fnames:
@@ -20,46 +20,38 @@ def get_templates(directory):
 	  				
 	return templates_dict
 
-def crop_letters(templates_dict):
+def get_image_info(templates_dict):
+	# updates dictionary with more info for loading to db
+
 	for key in templates_dict.iterkeys():
 		img = Image(key)
-		if img.height > 400:
-			binarize = img.binarize()
-			blobs = binarize.findBlobs()
-			bounds = blobs[-1].boundingBox()
-			crop = img.crop(bounds)
-			crop.save(key)
-			width = crop.width
-			height = crop.height
-
-		else:
-			width = img.width
-			height = img.height
-
+		width = img.width
+		height = img.height
 		current_value = templates_dict[key]
 		new_array = [current_value, width, height]	
 		# resets value of keys in dict so they return letter, width, height 
 		templates_dict[key] = new_array
 
-		
 	return templates_dict
 
-def load_letters(session, letters_dict):
 
-	for key in letters_dict.iterkeys():
+def load_letters(session, image_info): #image_info is a dictionary
+
+	for key in image_info.iterkeys():
 		file_url = key
 		font_name = key.split('/')[1]
-		letter_of_alphabet = letters_dict[key][0]
+		letter_of_alphabet = image_info[key][0]
 		value = ord(letter_of_alphabet)
-		width = letters_dict[key][1]
-		height = letters_dict[key][2]
-
+		width = image_info[key][1]
+		height = image_info[key][2]
+		aspect_ratio = round(float(width)/float(height), 4)
 
 		letter = model.Letter(value = value,
 								file_url = file_url,
 								font_name = font_name,
+								width = width,
 								height = height,
-								width = width)
+								aspect_ratio = aspect_ratio)
 
 		session.add(letter)
 	session.commit()
@@ -68,42 +60,31 @@ def load_letters(session, letters_dict):
 		# 	upper = True 
 
 
-def load_trainers(session, alphabet_dict):
+def load_training_letters(session, image_info):
 
-	for key in alphabet_dict.iterkeys():
+	for key in image_info.iterkeys():
 		file_url = key
-		letter_of_alphabet = alphabet_dict[key][0]
+		letter_of_alphabet = image_info[key][0]
 		value = ord(letter_of_alphabet)
-		width = alphabet_dict[key][1]
-		height = alphabet_dict[key][2]
+		width = image_info[key][1]
+		height = image_info[key][2]
+		aspect_ratio = round(float(width)/float(height), 4)
 
-
-
-
-		trainer = model.Trainer(value = value,
+		training_letter = model.Training_Letter(value = value,
 								file_url = file_url,
+								width = width,
 								height = height,
-								width = width)
+								aspect_ratio = aspect_ratio)
 
-		session.add(trainer)
+		session.add(training_letter)
 	session.commit()
 
 
-
-
-
-
-
-	    
 def main(session):
-	# directory = 'templates'
-	# templates_dict = get_templates(directory)
-	# cropped_letters_dict = crop_letters(templates_dict)
-	# load_letters(session, letters_dict)
-
-	# alphabet_dict = get_templates('training_alphabet')
-	# cropped_alphabet_dict = crop_letters(alphabet_dict)
-	# load_trainers(session, alphabet_dict)
+	# directory = 'training_alphabet' or directory = 'templates'
+	alphabet_dict = get_templates(directory)
+	alphabet_info = get_image_info(alphabet_dict)	
+	load_training_letters(session, alphabet_info)
 
 
 if __name__ == "__main__":
