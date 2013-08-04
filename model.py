@@ -21,6 +21,7 @@ class Font(Base):
 	name = Column(String(100))
 	family = Column(String(100))
 
+
 class Trainer (Base):
 	__tablename__ = 'trainers'
 	id = Column(Integer, primary_key = True, autoincrement = True)
@@ -34,6 +35,7 @@ class Letter(Base):
 	file_url = Column(String(150))
 	height = Column(Integer)
 	width = Column(Integer)
+	font_name = Column(String(100))
 
 	font_id = Column(Integer, ForeignKey('fonts.id'))
 	trainer_value = Column(Integer, ForeignKey('trainers.value'))
