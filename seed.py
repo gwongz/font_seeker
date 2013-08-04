@@ -48,6 +48,7 @@ def load_letters(session, letters_dict):
 
 	for key in letters_dict.iterkeys():
 		file_url = key
+		font_name = key.split('/')[1]
 		letter_of_alphabet = letters_dict[key][0]
 		value = ord(letter_of_alphabet)
 		width = letters_dict[key][1]
@@ -56,6 +57,7 @@ def load_letters(session, letters_dict):
 
 		letter = model.Letter(value = value,
 								file_url = file_url,
+								font_name = font_name,
 								height = height,
 								width = width)
 
