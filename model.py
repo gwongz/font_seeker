@@ -2,7 +2,7 @@
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine, ForeignKey
-from sqlalchemy import Column, Integer, String, Date 
+from sqlalchemy import Column, Integer, String, Float 
 from sqlalchemy.orm import sessionmaker, relationship, backref, scoped_session
 
 engine = create_engine('sqlite:///fonts.db', echo=True)
@@ -22,11 +22,14 @@ class Font(Base):
 	family = Column(String(100))
 
 
-class Trainer (Base):
-	__tablename__ = 'trainers'
+class Training_Letter (Base):
+	__tablename__ = 'training_letters'
 	id = Column(Integer, primary_key = True, autoincrement = True)
 	value = Column(Integer)
 	file_url = Column(String(150))
+	width = Column(Integer)
+	height = Column(Integer)
+	aspect_ratio = Column(Float) 
 
 class Letter(Base):
 	__tablename__ = 'letters'
@@ -34,16 +37,17 @@ class Letter(Base):
 	id = Column(Integer, primary_key = True, autoincrement = True)
 	value = Column(Integer)
 	file_url = Column(String(150))
-	height = Column(Integer)
 	width = Column(Integer)
+	height = Column(Integer)
+	aspect_ratio = Column(Float)
 	font_name = Column(String(100))
 
 	font_id = Column(Integer, ForeignKey('fonts.id'))
-	trainer_value = Column(Integer, ForeignKey('trainers.value'))
+	training_letter_value = Column(Integer, ForeignKey('training_letters.value'))
 	
 	# not sure how this works 
 	font = relationship('Font', backref=backref('fonts', order_by=id))
-	trainer = relationship('Trainer', backref=backref('trainers', order_by=id))
+	training_letter = relationship('Training_Letter', backref=backref('training_letters', order_by=id))
 
 	
 	# add an is serif column?	
