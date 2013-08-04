@@ -8,6 +8,9 @@ from PIL import Image, ImageDraw, ImageFont
 """Draws uppercase and lowercase samples for fonts located in 'fonts' directory"""
 
 def make_font_directories(root_directory):
+
+	if not os.path.exists(root_directory):
+		os.mkdir(root_directory)
 	
 	ttfs = os.listdir(root_directory) 
 
@@ -42,12 +45,13 @@ def draw_lower(fontpath, shortname, font_directory):
 		
 		# if sample file doesn't already exist, then make one
 		if not os.path.exists(letterpath): 
-			W, H = (300, 300)
+			W, H = (600, 600)
 			img = Image.new('1', (W,H), 'white')	
-			font = ImageFont.truetype(fontpath, 250) 
+			font = ImageFont.truetype(fontpath, 350) 
 			draw = ImageDraw.Draw(img)
-			w, h = draw.textsize(letter)
-			draw.text(((W-w)/4,(H-h)/4), letter, font=font, fill='black')			
+			# w, h = draw.textsize(letter)
+			# draw.text(((W-w)/4,(H-h)/10), letter, font=font, fill='black')
+			draw.text((W/5,H/5), letter, font=font, fill='black')			
 			# saves new img to font_directory as 'a.png', 'b.png', etc.	
 			img.save(letterpath, quality = 100)
 
@@ -57,19 +61,19 @@ def draw_upper(fontpath, shortname, font_directory):
 		letterpath = os.path.abspath(os.path.join(font_directory, letter+'.png'))
 	
 		if not os.path.exists(letterpath):
-			W, H = (300, 300)
+			W, H = (600,600)
 			img = Image.new('1', (W,H), 'white')	
-			font = ImageFont.truetype(fontpath, 250) 
+			font = ImageFont.truetype(fontpath, 350) 
 			draw = ImageDraw.Draw(img)
-			w, h = draw.textsize(letter)
-			draw.text(((W-w)/4,(H-h)/4), letter, font=font, fill='black')			
+			# w, h = draw.textsize(letter)
+			draw.text((W/5, H/5), letter, font=font, fill='black')			
 			# saves new img to font_directory as 'A.png', 'B.png', etc.	
 			img.save(letterpath, quality = 100)
 
 
 def main():
 
-	root_directory = 'fonts'
+	root_directory = 'templates'
 	make_font_directories(root_directory)
 
 if __name__== "__main__":
