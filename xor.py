@@ -1,16 +1,17 @@
-import sys
-from PIL import Image
 import numpy as np 
-from PIL import ImageChops
+from sys import argv
+from PIL import Image, ImageChops
+
+
 
 """Experimenting with XOR on images"""
 
 
 def load_image(img):
-	"""Opens image, converts if necessary and loads its pixel values"""
 	img = Image.open(img)
 	if img.mode != 1:
 		img = img.convert('1')
+	# loads pixel values 
 	img = img.getdata()
 	return img 
 
@@ -19,8 +20,6 @@ def difference_of_images(img1, img2): # using XOR in python
 
 	
 	difference = [i ^ j for i, j in zip(img1, img2)]
-	
-
 	difference2 = [i ^ j for i, j in zip(img2, img1)]
 
 
@@ -41,9 +40,6 @@ def difference_of_images(img1, img2): # using XOR in python
 
 	
 
-img1 = load_image('rockwell_b.png')
-img2 = load_image('rockwell_a.png')
-difference_of_images(img1, img2)
 
 
 
@@ -87,26 +83,17 @@ difference_of_images(img1, img2)
 # print "This is the difference obtained through ImageChops: ", percent
 
 
- 
 
+def main():
+	
+	script, infile1, infile2 = argv
+	img1 = load_image(infile1)
+	img2 = load_image(infile2)
 
- 
+	difference_of_images(img1, img2)
 
-# looping through both grids
-# black = Image.open('cropped_left.png')
-# black = black.convert('1')
-# black = black.getdata()
-
-# white = Image.open('cropped_right.png')
-# white = white.convert('1')
-# white = white.getdata() 
-# pixel_count = len(black) + len(white)# this is same as len(white)
-
-# def main():
-# 	args = sys.argv
-# 	script, input_file = args
-
-# 	user_img = load_image(user_img)
+if__name__ == "__main__":
+	main()
 
 
 
