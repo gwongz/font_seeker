@@ -23,7 +23,8 @@ def source_data(file_url):
 
 def download_fonts(font_urls):
 	
-	fontpath = "fonts"
+
+	fontpath = 'templates'
 	font_dict = {}
 	# [0:51]:
 	for url in font_urls:
@@ -32,7 +33,7 @@ def download_fonts(font_urls):
 		name = name.strip(',')
 		name += '.ttf'
 		font_dict.setdefault(name, url)
-		# downloads the file and saves it to ne
+		# downloads the file and saves it to the templates directory as '.ttf file'
 		# urllib.urlretrieve(url, os.path.join(fontpath, name))
 	return font_dict
 
