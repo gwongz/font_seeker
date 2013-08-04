@@ -2,7 +2,9 @@ import os
 import csv
 import urllib
 
-### will need to incorporate into seed.py after testing 
+"""Downloads font urls to local directory and creates csv file of fonts and urls"""
+
+
 def source_data(file_url):
 
 	with open (file_url) as csvfile:
@@ -19,10 +21,9 @@ def source_data(file_url):
 		return font_urls 
 
 
-
 def download_fonts(font_urls):
 	
-	
+	fontpath = "fonts"
 	font_dict = {}
 	# [0:51]:
 	for url in font_urls:
@@ -31,8 +32,8 @@ def download_fonts(font_urls):
 		name = name.strip(',')
 		name += '.ttf'
 		font_dict.setdefault(name, url)
-
-		# urllib.urlretrieve(url, os.path.join(path, name))
+		# downloads the file and saves it to ne
+		# urllib.urlretrieve(url, os.path.join(fontpath, name))
 	return font_dict
 
 def write_fonts_to_master(font_dict, myfile):
@@ -44,14 +45,11 @@ def write_fonts_to_master(font_dict, myfile):
 
 def main():
 	
-	file_url = 'font/font/file'
-	font_urls = source_data(file_url) 
+	source_file = 'font/font/file'
+	font_urls = source_data(source_file) 
 	font_dict = download_fonts(font_urls)
-	myfile = 'master_fonts.csv'
+	myfile = 'seed_data.csv'
 	write_fonts_to_master(font_dict, myfile)
-	
-
-
 
 
 if __name__== "__main__":
