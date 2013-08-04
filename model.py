@@ -30,18 +30,17 @@ class Letter(Base):
 	__tablename__ = 'letters'
 
 	id = Column(Integer, primary_key = True, autoincrement = True)
-	value = Column(Integer(10)), ForeignKey('training_letters.value')
+	value = Column(Integer)
 	file_url = Column(String(150))
-	upper = Column(Boolean)
 	height = Column(Integer)
 	width = Column(Integer)
 
 	font_id = Column(Integer, ForeignKey('fonts.id'))
-	font_name = Column(String, ForeignKey('fonts.name'))
-
+	trainer_value = Column(Integer, ForeignKey('trainers.value'))
+	
 	# not sure how this works 
 	font = relationship('Font', backref=backref('fonts', order_by=id))
-	training_letter = relationship('Training', backref=backref('trainers', order_by=value))
+	trainer = relationship('Trainer', backref=backref('trainers', order_by=id))
 
 	
 	# add an is serif column?	
