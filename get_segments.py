@@ -1,5 +1,6 @@
 from sys import argv
 from PIL import Image
+import os 
 
 """Segments image into individual characters"""
 
@@ -13,8 +14,8 @@ def load_image(imgname):
 
 	pixels = img.load()
 	columns = []
-	for y in range(height):
-		columns.append([pixels[y,x] for x in range(width)])
+	for y in range(width):
+		columns.append([pixels[y,x] for x in range(height)])
 
 	return width, height, columns, img
 
@@ -29,12 +30,12 @@ def load_image(imgname):
 	# don't need this function right now 
 	# grid[x][y] = columns[y][x]
 
-def get_column(grid): # stores rows from image grid as columns
-	pixels = img.load()
-	columns = []
-	for y in range(height):
-		columns.append([pixels[y,x] for x in range(width)])
-	return columns
+# def get_column(grid): # stores rows from image grid as columns
+# 	pixels = img.load()
+# 	columns = []
+# 	for y in range(width):
+# 		columns.append([pixels[y,x] for x in range(height)])
+# 	return columns
 	# column returns color at coordinate (y,x) - read as 
 	# row[4] column[0]
 
@@ -86,7 +87,9 @@ def scan_image(width, height, columns):
 def get_letters(slices, height, img):
 	# slices = [(0,0), (1,0)]
 	# slices = [(35,0), (67,0)]
-	
+	if not os.path.exists('user'):
+		os.mkdir('user')
+
 	segments = [] 
 	n=0
 
@@ -99,11 +102,11 @@ def get_letters(slices, height, img):
 			box = (left, top, left+width, top+height)
 			
 
-			output = 'user_crop%s.png' % (n)
+			output = 'segment_%s.png' % (n)
 			segments.append(output)
 
 			letter = img.crop(box)
-			letter.save(output) # saves image to current directory as 'letter'			
+			letter.save('user/' + output) # saves image to user directory as 'segment_0.png'			
 		
 			n += 2 # increment by 2 because each pair is a set of bounds
 
