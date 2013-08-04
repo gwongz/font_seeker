@@ -26,6 +26,7 @@ class Trainer (Base):
 	__tablename__ = 'trainers'
 	id = Column(Integer, primary_key = True, autoincrement = True)
 	value = Column(Integer)
+	file_url = Column(String(150))
 
 class Letter(Base):
 	__tablename__ = 'letters'
