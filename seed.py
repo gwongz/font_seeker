@@ -68,7 +68,25 @@ def load_letters(session, letters_dict):
 		# 	upper = True 
 
 
+def load_trainers(session, alphabet_dict):
 
+	for key in alphabet_dict.iterkeys():
+		file_url = key
+		letter_of_alphabet = alphabet_dict[key][0]
+		value = ord(letter_of_alphabet)
+		width = alphabet_dict[key][1]
+		height = alphabet_dict[key][2]
+
+
+
+
+		trainer = model.Trainer(value = value,
+								file_url = file_url,
+								height = height,
+								width = width)
+
+		session.add(trainer)
+	session.commit()
 
 
 
@@ -78,10 +96,15 @@ def load_letters(session, letters_dict):
 
 	    
 def main(session):
-	directory = 'templates'
-	templates_dict = get_templates(directory)
-	letters_dict = crop_letters(templates_dict)
-	load_letters(session, letters_dict)
+	# directory = 'templates'
+	# templates_dict = get_templates(directory)
+	# cropped_letters_dict = crop_letters(templates_dict)
+	# load_letters(session, letters_dict)
+
+	# alphabet_dict = get_templates('training_alphabet')
+	# cropped_alphabet_dict = crop_letters(alphabet_dict)
+	# load_trainers(session, alphabet_dict)
+
 
 if __name__ == "__main__":
 	
@@ -89,15 +112,3 @@ if __name__ == "__main__":
 	        	 
 
 
-
-
-
-
-
-
-
-	
-
-# if __name__ == "__main__":
-# 	s = model.session
-# 	main(s)
