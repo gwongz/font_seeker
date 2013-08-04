@@ -3,11 +3,12 @@
 import os 
 import re 
 from SimpleCV import Image
+import model 
 
 
-def get_samples(directory):
+def get_templates(directory):
 
-	samples_dict = {}
+	templates_dict = {}
 
 	# looks for .png sample files in fonts directory and appends to dict by letter 
 	for dirpath, dirnames, fnames in os.walk(directory):
@@ -15,25 +16,56 @@ def get_samples(directory):
 	        if f.endswith('.png'):
 	        	location = os.path.join(dirpath, f)
 	        	letter = f.split('.')[0]
-	        	samples_dict.setdefault(location, letter)
+	        	templates_dict.setdefault(location, letter)
 	  				
-	return samples_dict
+	return templates_dict
 
-def crop_letters(samples_dict):
-	for key in samples_dict.iterkeys():
+def crop_letters(templates_dict):
+	for key in templates_dict.iterkeys():
 		img = Image(key)
-		binarize = img.binarize()
-		blobs = binarize.findBlobs()
-		bounds = blobs[-1].boundingBox()
-		crop = img.crop(bounds)
-		crop.save(key)
+		if img.height > 400:
+			binarize = img.binarize()
+			blobs = binarize.findBlobs()
+			bounds = blobs[-1].boundingBox()
+			crop = img.crop(bounds)
+			crop.save(key)
+			width = crop.width
+			height = crop.height
 
-def load_letters(samples_dict):
+		else:
+			width = img.width
+			height = img.height
 
-	for key in samples_dict.iterkeys():
+		current_value = templates_dict[key]
+		new_array = [current_value, width, height]	
+		# resets value of keys in dict so they return letter, width, height 
+		templates_dict[key] = new_array
+
+		
+	return templates_dict
+
+def load_letters(session, letters_dict):
+
+	for key in letters_dict.iterkeys():
 		file_url = key
-		value = samples_dict[key]
-		print key, value 
+		letter_of_alphabet = letters_dict[key][0]
+		value = ord(letter_of_alphabet)
+		width = letters_dict[key][1]
+		height = letters_dict[key][2]
+
+
+		letter = model.Letter(value = value,
+								file_url = file_url,
+								height = height,
+								width = width)
+
+		session.add(letter)
+	session.commit()
+
+		# if 65 <= value <= 90:
+		# 	upper = True 
+
+
 
 
 
@@ -43,15 +75,15 @@ def load_letters(samples_dict):
 
 
 	    
-def main():
+def main(session):
 	directory = 'templates'
-	font_samples = get_samples(directory)
-	
-	crop_letters(font_samples)
-
+	templates_dict = get_templates(directory)
+	letters_dict = crop_letters(templates_dict)
+	load_letters(session, letters_dict)
 
 if __name__ == "__main__":
-	main()
+	
+	main(model.session)
 	        	 
 
 
@@ -61,13 +93,6 @@ if __name__ == "__main__":
 
 
 
-
-# img = Image('fonts/Arial/a.png')
-# print img.height 
-
-# def main(session):
-# 	directory = 'fonts'
-# 	crop_samples(directory)
 
 	
 
