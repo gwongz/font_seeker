@@ -51,6 +51,20 @@ class Letter(Base):
 
 	
 	# add an is serif column?	
+class User_Image(Base):
+	__tablename__ = 'user_images'
+
+	id = Column(Integer, primary_key = True, autoincrement = True)
+	file_url = Column(String(150))
+	width = Column(Integer)
+	height = Column(Integer)
+	aspect_ratio = Column(Float)
+	training_letter_aspect_ratio = Column(Float, ForeignKey('training_letters.aspect_ratio'))
+	letter_aspect_ratio = Column(Float, ForeignKey('letters.aspect_ratio'))
+
+	training_letter = relationship('Training_Letter', backref=backref('training_letters', order_by=id))
+	letter = relationship('Letter', backref = backref('letters', order_by=id))
+
 
 def main():
 	Base.metadata.create_all(engine)
