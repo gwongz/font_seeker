@@ -1,61 +1,152 @@
-import numpy as np 
+
+import os
 from sys import argv
+from bisect import bisect_right
 # from PIL import Image, ImageChops
 from SimpleCV import Image
+import seed
 import model 
 
-"""Loads segments from get_segments and matches each segment against
-letters in training alphabet to return best match"""
+
+"""Identifies letter of alphabet for each segment stored in 'user' directory"""
 
 
-def load_image(img):
-	img = Image(img)
-	# if img.mode != 1:
-	# 	img = img.convert('1')
-	img = img.load()
-	# loads pixel values 
-	# img = img.getdata()
-	# width = img.size[0]
-	# height = img.size[1]
-	return img
+def clear_user_image(session):
+	user_img = model.session.query(model.User_Image).all()
+	
+	for imgfile in user_img:
+		session.delete(imgfile)
+		session.commit()
 
-def load_training_alphabet(letter_value):
 
-	letter = model.session.query(model.Trainer).filter(model.Trainer.value==letter_value).first()
-	location = letter.file_url
-	value = letter.value 
+def add_user_image(directory):
+
+	# clear db before storing what's been added to user directory	
+	session = model.session
+	clear_user_image(session)
+
+	segments = os.listdir(directory)
+	if '.DS_Store' in segments:
+			segments.remove('.DS_Store')
+
+
+	for imgfile in segments:
+		# adds each segment to database as User_Image object 
+		img_location = os.path.abspath(os.path.join(directory, imgfile))
+		file_url = os.path.join(directory, imgfile)
+		name = str(file_url)
+
+		img = Image(img_location)
+		blobs = img.binarize().findBlobs()
+		bounds = blobs[-1].boundingBox()
+		crop = img.crop(bounds).save(name)
+
+		seed.load_user_image(session, img_location, file_url) # location is abs path, file_url is relative path 
+
+
+def identify_letter():
+
+	user_imgs = model.session.query(model.User_Image).all()
+	user_aspect_ratios = []
+	
+	for img in user_imgs:
+		user_aspect_ratios.append(img.aspect_ratio) # do i want to store these as a list or dictionary? 
+
+	alphabet = model.session.query(model.Training_Letter).all()
+	alphabet_aspect_ratios = []
+	for letter in alphabet:
+		alphabet_aspect_ratios.append(letter.aspect_ratio)
+
+
 
 	
-	return location # opens up 'A' in the training alphabet
-	
 
-	
+	sorted_alphabet = sorted(alphabet_aspect_ratios)
 
+	# i should map sorted alphabet to a dictionary 
 
-
-
-def identify_letter(segments):
-	"""Identifies what letter a segment is"""
-	# < len(segments):
-	# n=0
-	# while n ==0: 
-	match = False
-
-	while match not True:
-		img1 = Image(segments[0])
-		letter_value = 65
-		img2_location = load_training_alphabet(letter_value)
-		img2 = Image(image2_location)
+	# threshold = 0.5
+	for ratio in user_aspect_ratios:
 		
-		width = max(img1.width, img2.width)
-		height = max(img1.height, img2.height)
+		threshold = 0.05
+		ratio_upper = ratio+threshold
+		ratio_lower = ratio-threshold
 
-		# if img1 is bigger, resize it down to img2 size
-		if img1.size() > img2.size():
-			img = img1.resize(width, height)
+		matches = [x for x in sorted_alphabet if x > ratio_lower and x < ratio_upper]
 
-		else:
-			img = img2.resize(width, height)
+		for match in matches:
+			
+
+		# letters = model.session.query(model.Training_Letter).filter_by(aspect_ratio=aspect_ratio).all()
+
+		# # this gives me a Training Letter object but how do I get the letter ID from this?
+
+		# for item in letters:
+		# 	value = item.value
+		# 	alphabet = chr(value)
+		# 	print alphabet 
+
+
+		break
+
+
+
+
+
+
+
+
+
+
+
+def find_le(a, x):
+    'Find rightmost value less than or equal to x'
+    i = bisect_right(a, x)
+    if i:
+        return a[i-1]
+    raise ValueError
+
+
+
+
+
+# def load_training_alphabet(letter_value):
+
+# 	letter = model.session.query(model.Trainer).filter(model.Trainer.value==letter_value).first()
+# 	location = letter.file_url
+# 	value = letter.value 
+
+	
+# 	return location # opens up 'A' in the training alphabet
+	
+
+	
+
+
+
+
+# def identify_letter(segments):
+# 	"""Identifies what letter a segment is"""
+# 	# < len(segments):
+# 	# n=0
+# 	# while n ==0: 
+# 	match = False
+
+# 	while match not True:
+# 		img1 = Image(segments[0])
+# 		letter_value = 65
+# 		img2_location = load_training_alphabet(letter_value)
+# 		img2 = Image(image2_location)
+		
+# 		width = max(img1.width, img2.width)
+# 		height = max(img1.height, img2.height)
+
+# 		# if img1 is bigger, resize it down to img2 size
+# 		if img1.size() > img2.size():
+# 			img = img1.resize(width, height)
+
+# 		else:
+# 			img = img2.resize(width, height)
 
 
 
@@ -74,6 +165,7 @@ def identify_letter(segments):
 		# don't forget to increment letter value
 		# n+=1 # increments n 
 
+# only works when images are identically sized 
 def difference_of_images(img1, img2): # using XOR in python
 
 	
@@ -100,55 +192,16 @@ def difference_of_images(img1, img2): # using XOR in python
 
 
 
-# def difference_of_images(img1, img2): # need loaded pixels
-# 	diff = []
-# 	diff2 = []
 
-# 	for pixel in img1:
-# 		for pixel2 in img2:
-# 			if pixel != pixel2:
-# 				diff.append(pixel - pixel2)
-# 				diff2.append(pixel2 - pixel)
-# 		break
-	
-# 	total_diff = float(len(diff)) + float(len(diff2))
-# 	pixel_count = float(len(img1)) + float(len(img2))
-# 	percent_of_diff = total_diff/pixel_count
-# #1 means complete difference; 0 means complete same
-
-# 	return percent_of_diff
-
-# img1 = load_image('rockwell_b.png')
-# img2 = load_image('rockwell_a.png')
-# print difference_of_images(img1, img2)
-
-
-
-# using ImageChops instead of nested loops
-# imga = Image.open('cropped_right.png')
-# imgb = Image.open('cropped_left.png')
-# diffa = ImageChops.difference(imga, imgb) # returns an image object
-# diffa = diffa.getdata() # loads pixels of image object
-# chops = []
-# for pixel in diffa:
-# 	if pixel != 0: # if there is any difference in the two pixels:
-# 		chops.append(pixel)
-# num_of_different_pixels = len(chops) 
-# total_pixels = len(diffa)
-# percent = num_of_different_pixels/total_pixels
-
-# print "This is the difference obtained through ImageChops: ", percent
 
 
 
 
 
 def main():
-	
-	# script, infile1, infile2 = argv
-	segments = ['user_crop0.png', 'user_crop2.png']
-	# load_training_alphabet(65)
-	# difference_of_images(segments)
+	# directory = 'user'
+	# add_user_image(directory)
+	identify_letter()
 
 if __name__ == "__main__":
 	main()
