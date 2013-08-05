@@ -1,8 +1,9 @@
 from sys import argv
 from PIL import Image
 import os 
+import model 
 
-"""Segments image into individual characters"""
+"""Segments image into individual characters and saves to user_image directory"""
 
 def load_image(imgname):
 	img = Image.open(imgname)
@@ -84,11 +85,11 @@ def scan_image(width, height, columns):
 	# slices = [(x, 0) for x in boundaries if x!= None] # a list of tuples, (x,y) where splits are 
 	return boundaries
 
-def get_letters(slices, height, img):
+def get_segments(slices, height, img):
 	# slices = [(0,0), (1,0)]
 	# slices = [(35,0), (67,0)]
-	if not os.path.exists('user'):
-		os.mkdir('user')
+	if not os.path.exists('user_image'):
+		os.mkdir('user_image')
 
 	segments = [] 
 	n=0
@@ -106,7 +107,7 @@ def get_letters(slices, height, img):
 			segments.append(output)
 
 			letter = img.crop(box)
-			letter.save('user/' + output) # saves image to user directory as 'segment_0.png'			
+			letter.save('user_image/' + output) # saves image to user_image directory as 'segment_0.png'			
 		
 			n += 2 # increment by 2 because each pair is a set of bounds
 
@@ -129,7 +130,7 @@ def main():
 	img = img_width_height_columns[3]
 
 	y_bounds = scan_image(width, height, columns)
-	segments = get_letters(y_bounds, height, img)
+	segments = get_segments(y_bounds, height, img)
 	# segments is a list of all the cropped segments
 
 
