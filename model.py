@@ -43,11 +43,11 @@ class Letter(Base):
 	font_name = Column(String(100))
 
 	font_id = Column(Integer, ForeignKey('fonts.id'))
-	training_letter_value = Column(Integer, ForeignKey('training_letters.value'))
+	
 	
 	# not sure how this works 
 	font = relationship('Font', backref=backref('fonts', order_by=id))
-	training_letter = relationship('Training_Letter', backref=backref('training_letters', order_by=id))
+
 
 	
 	# add an is serif column?	
@@ -64,6 +64,9 @@ class User_Image(Base):
 
 	training_letter = relationship('Training_Letter', backref=backref('training_letters', order_by=id))
 	letter = relationship('Letter', backref = backref('letters', order_by=id))
+
+	
+
 
 
 def main():

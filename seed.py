@@ -79,6 +79,20 @@ def load_training_letters(session, image_info):
 		session.add(training_letter)
 	session.commit()
 
+def load_user_image(session, img_location, file_url):
+	img = Image(img_location)
+	width = img.width
+	height = img.height
+	aspect_ratio = round(float(width)/float(height), 4)
+
+	user_image = model.User_Image(file_url = file_url,
+								width = width,
+								height = height,
+								aspect_ratio = aspect_ratio)
+
+	session.add(user_image)
+	session.commit()
+
 
 def main(session):
 	# directory = 'training_alphabet' or directory = 'templates'
