@@ -42,18 +42,18 @@ def load_image(imgname):
 
 
 def first_black(width, height, columns, current_col):
-	
+
 	while current_col < width:
 		if columns[current_col].count(0) >= 1:
 			return current_col	
 		else:
 			current_col +=1
-		
-	
+
+
 def all_white(width, height, columns, current_col):
-	
+
 	while current_col < width:	
-		if columns[current_col].count(255) == width:
+		if columns[current_col].count(255) == height:
 			return current_col
 		else:
 			current_col +=1
@@ -62,13 +62,13 @@ def all_white(width, height, columns, current_col):
 
 
 def scan_image(width, height, columns):
-	"""Finds vertical project of image"""
+	"""Finds vertical projection of image"""
 	boundaries = []
 	current_col = 0
 
 	while current_col < width and current_col != None:
-		
-		
+
+
 		next_col = first_black(width, height, columns, current_col)
 		if next_col == None:
 			break # there is no black - prevents infinite loop 
@@ -76,7 +76,7 @@ def scan_image(width, height, columns):
 		if next_col != None: # if there is black, add and move on
 			boundaries.append(next_col)
 			current_col = next_col
-		
+
 			white_col = all_white(width, height, columns, current_col) # change looking for to white
 			if white_col != None: # if there is an all white column
 				boundaries.append(white_col)
@@ -96,19 +96,19 @@ def get_segments(slices, height, img):
 
 	for item in slices:
 		if n <= len(slices)-1: 
-			
+
 			width = slices[n+1] - slices[n] # width of each crop
 			left = slices[n]
 			top = 0 
 			box = (left, top, left+width, top+height)
-			
+
 
 			output = 'segment_%s.png' % (n)
 			segments.append(output)
 
 			letter = img.crop(box)
 			letter.save('user_image/' + output) # saves image to user_image directory as 'segment_0.png'			
-		
+
 			n += 2 # increment by 2 because each pair is a set of bounds
 
 		else:
@@ -136,4 +136,3 @@ def main():
 
 if __name__== "__main__":
 	main()
-
