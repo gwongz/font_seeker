@@ -1,9 +1,12 @@
 
 import os
+import numpy 
 from sys import argv
 from bisect import bisect_left, bisect_right
 # from PIL import Image, ImageChops
-from SimpleCV import Image 
+# from SimpleCV import Image 
+from PIL import Image, ImageOps
+import SimpleCV as cv
 import seed
 import model 
 
@@ -34,7 +37,7 @@ def add_user_image(directory):
 		file_url = os.path.join(directory, imgfile)
 		name = str(file_url)
 
-		img = Image(img_location)
+		img = cv.Image(img_location)
 		blobs = img.binarize().findBlobs()
 		bounds = blobs[-1].boundingBox()
 		crop = img.crop(bounds).save(name)
@@ -51,97 +54,158 @@ def sort_alphabet():
 	sorted_alphabet = sorted(alphabet_aspect_ratios)
 	return sorted_alphabet
 
+def make_alphabet_dictionary():
+	
+	alphabet_dict = {}
+	alphabet = model.session.query(model.Training_Letter.value).all()
+
+	for letter in alphabet:
+		value = letter[0]
+		alphabet_ratios = model.session.query(model.Training_Letter.aspect_ratio).filter(model.Training_Letter.value==value).all()
+	
+		
+		for ratio in alphabet_ratios:
+			alphabet_dict.setdefault(value, ratio)
+
+	return alphabet_dict # key is letter value, value is aspect ratio 
 
 def match_proportions(user_dir, sorted_alphabet):
-
-	# alphabet ratios is sorted list 
-	
+ 
 	proportion_matches = {}
 
 	segments = os.listdir(user_dir)
 	if '.DS_Store' in segments:
 		segments.remove('.DS_Store')
 
-	print "These are the segments"	
-
-
 	# iterate through each of the segments and find best proportion matches for each segment 
 	for imgfile in segments:
 		img_url = os.path.abspath(os.path.join(user_dir, imgfile))
-		print "Segments imglocation: ", img_url
-		img = Image(img_url)
+		# print "Segments imglocation: ", img_url
+		img = cv.Image(img_url)
 		segment_ratio = float(img.width)/float(img.height)
 
 		closest = min(sorted_alphabet, key=lambda x:abs(x-segment_ratio))
 		index_pos = sorted_alphabet.index(closest)
 
 		# start has to be greater than 0 
-		start = index_pos - 2
+		start = index_pos - 3
 		if start < 0:
 			start = 0
-		# stop has to be 
-		stop = index_pos + 2
-		if stop > len(sorted_alphabet):
+		# stop has to be within index range of alphabet list 
+		stop = index_pos + 3
+		if stop > len(sorted_alphabet)-1:
 			stop = -1
 
 		matches = sorted_alphabet[start:stop]
-
-
-		print "This is segment ratio up top", segment_ratio
-
-		
+		# print "This is segment ratio up top", segment_ratio
 		proportion_matches.setdefault(img.filename, matches)
 
+	return proportion_matches # a dictionary 
 
+def identify_letter(proportion_matches):
+	# proportion matches is a dict with imgfilename as key and letters that are top matching 
+	letter_proportions = {}
 	for key, value in proportion_matches.items():
-		print key, value 
+		name = key
+		letters = []
+		n=0
+		while n < len(value)-1:
+			aspect_ratio = value[n]
+			letter_values = model.session.query(model.Training_Letter.value).filter(model.Training_Letter.aspect_ratio == aspect_ratio).first()
+			letters.append(letter_values)
+			n+=1
+		letter_proportions.setdefault(name, letters)
+	return letter_proportions	# another dictionary - these are the letters that we want to run xor on 
 
-	return proportion_matches 
 
+def run_comparisons(user_dir, templates_dir):
 
-# def index(a, x):
-#     'Locate the leftmost value exactly equal to x'
-#     i = bisect_left(a, x)
-#     if i != len(a) and a[i] == x:
-#         return i
-#     else:
-#     	pass
-
-# def find_le(a, x):
-#     'Find rightmost value less than or equal to x'
-#     i = bisect_right(a, x)
-#     if i:
-#         return a[i-1]
-#     else:
-#     	pass
-
-# def find_ge(a, x):
-#     'Find leftmost item greater than or equal to x'
-#     i = bisect_left(a, x)
-#     if i != len(a):
-#         return a[i]
-#     # raise ValueError
-#     pass
+	comparison_table = {}
+	
+	segments = os.listdir(user_dir)
+	if '.DS_Store' in segments:
+		segments.remove('.DS_Store')
 
 
 
-def resize_images(bigger_img, smaller_img, new_width, new_height):
+	for imgfile in segments:
+		img_url = os.path.abspath(os.path.join(user_dir, imgfile))
+	
+		user_img = Image.open(img_url) # using PIL 
+		# deterine whether to check upper or lower[?]
 
-	print "This is the new width", new_width
-	print "This is the big_img filename", bigger_img.filename
-	print "This is the big_img.width before resize", bigger_img.width
 
-	name = bigger_img.filename
+		templates = os.listdir(templates_dir)
+		if '.DS_Store' in templates:
+			templates.remove('.DS_Store')
+		if 'upper' in templates:
+			templates.remove('upper')
 
-	print "This is the name:", name 
 
-	resized_img = bigger_img.resize(new_width, new_height)
+		
+		for templatefile in templates:		
+			
+			template_url = os.path.abspath(os.path.join(templates_dir, templatefile))
+			print "Template url: ", template_url
+			print "Templatefile", templatefile
+		
+			template = Image.open(template_url)
+			print "This is template size: ", template.size
 
-	 # this overwrites the template library - should save to temp instead
+			if user_img.size > template.size:
 
-	print "This is the resized_img.filename", resized_img.filename
+				# if user image is bigger, size it down to template size
+				user_img_resized = resize_to_smaller(user_img, template.size[0], template.size[1])
+				diff = difference_of_images(user_img, template)
 
-	print "This is the new_big.width after resize", resized_img.width
+				
+				comparison_table.setdefault(user_img.filename, []).append(diff)
+				# comparison_table[user_img.filename] = comparison_table.get(user_img.filename, [])
+			# comparison_table.setdefault(user_img.filename, [diff])
+
+			
+
+			else:
+				template_resized = resize_to_smaller(template, user_img.size[0], user_img.size[1])
+				print template_resized.size
+
+
+				diff = difference_of_images(user_img, template)
+				comparison_table.setdefault(user_img.filename, []).append(diff)
+				# comparison_table[user_img.filename] = comparison_table.get(user_img.filename, [])
+
+
+				
+			# comparison_table.setdefault(user_img.filename, [diff])
+
+			
+
+	return comparison_table
+	
+
+		
+
+
+
+
+
+
+
+
+
+
+		
+
+
+
+
+def resize_to_smaller(img, new_width, new_height): # passed in as PIL Images
+
+	
+	# new_width = smaller_img.size[0] # will this work with PIL 
+	# new_height = smaller_img.size[1]
+
+	resized_img = ImageOps.fit(img, (new_width, new_height), Image.ANTIALIAS, 0, (0.5, 0.5))
 
 	return resized_img # resized down to new width
 
@@ -149,25 +213,29 @@ def resize_images(bigger_img, smaller_img, new_width, new_height):
 
 
 # only works when images are identically sized 
-def difference_of_images(user_img, template_img): # using XOR in python
-	print "This is the difference function: ", user_img.filename, user_img.width, user_img.height
-	print "This is the template image in the difference function", template_img.filename, template_img.width, template_img.height
+def difference_of_images(user_img, template_img): # using XOR in python, passed in as simplecv imgs
+
+	pixel_user = numpy.asarray(user_img).flatten()
+	pixel_template = numpy.asarray(template_img).flatten()
+
+	difference = [i^j for i,j in zip(pixel_user, pixel_template)]	
 	
-	user_matrix = user_img.getNumpy().flatten()
-	template_matrix = template_img.getNumpy().flatten()
+	# user_matrix = user_img.getNumpy().flatten()
+	# template_matrix = template_img.getNumpy().flatten()
 
-	difference = [i ^ j for i, j in zip(user_matrix, template_matrix)]
-	difference2 = [i ^ j for i, j in zip(template_matrix, user_matrix)]
+	# difference = [i ^ j for i, j in zip(user_matrix, template_matrix)]
+	# difference2 = [i ^ j for i, j in zip(template_matrix, user_matrix)]
 
-
-	difference = difference.count(255)
-	difference2 = difference2.count(255)
-
-	
-	percent_of_diff = difference/float(len(user_matrix))
-	print "This is the percent_of_diff", percent_of_diff
-	return percent_of_diff
 	#however many times 255 appears in the list
+	difference = difference.count(255)
+	# difference2 = difference2.count(255)
+
+	
+	percent_of_diff = difference/float(len(pixel_user))
+	print "This is the percent_of_diff", percent_of_diff
+
+	return percent_of_diff
+	
 	
 	# total_diff = float(len(difference)) + float(len(difference2))
 	# pixel_count = float(len(img1)) + float(len(img2))
@@ -177,14 +245,6 @@ def difference_of_images(user_img, template_img): # using XOR in python
 
 			
 
-		# letters = model.session.query(model.Training_Letter).filter_by(aspect_ratio=aspect_ratio).all()
-
-		# # this gives me a Training Letter object but how do I get the letter ID from this?
-
-		# for item in letters:
-		# 	value = item.value
-		# 	alphabet = chr(value)
-		# 	print alphabet 
 
 
 		
@@ -194,11 +254,16 @@ def difference_of_images(user_img, template_img): # using XOR in python
 
 
 def main():
-	sorted_alphabet = sort_alphabet()
-	# directory = 'user_image'
-	# add_user_image(directory) # commits user images to database
-	p = match_proportions('user_image', sorted_alphabet)
-	
+	# sorted_alphabet = sort_alphabet()
+	# # directory = 'user_image'
+	# # add_user_image(directory) # commits user images to database
+	# p = match_proportions('user_image', sorted_alphabet) # return dictionary 
+	# letters = identify_letter(p) # another dictionary
+
+	# make_alphabet_dictionary()
+
+	font_table = run_comparisons('user_image', 'training_alphabet/Arial')
+	print font_table.items()
 
 	# identify_letter()
 	# get_user_images()
