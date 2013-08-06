@@ -1,5 +1,6 @@
 
 import os
+import re
 import numpy 
 from sys import argv
 from bisect import bisect_left, bisect_right
@@ -40,97 +41,22 @@ def add_user_image(directory):
 		img = cv.Image(img_location)
 		blobs = img.binarize().findBlobs()
 		bounds = blobs[-1].boundingBox()
+		
 		crop = img.crop(bounds).save(name)
 
 		seed.load_user_image(session, img_location, file_url) # location is abs path, file_url is relative path 
 
 
-def sort_alphabet():
-	alphabet = model.session.query(model.Training_Letter).all()
-	alphabet_aspect_ratios = []
-	for letter in alphabet:
-		alphabet_aspect_ratios.append(letter.aspect_ratio)
-
-	sorted_alphabet = sorted(alphabet_aspect_ratios)
-	return sorted_alphabet
-
-def make_alphabet_dictionary():
-	
-	alphabet_dict = {}
-	alphabet = model.session.query(model.Training_Letter.value).all()
-
-	for letter in alphabet:
-		value = letter[0]
-		alphabet_ratios = model.session.query(model.Training_Letter.aspect_ratio).filter(model.Training_Letter.value==value).all()
-	
-		
-		for ratio in alphabet_ratios:
-			alphabet_dict.setdefault(value, ratio)
-
-	return alphabet_dict # key is letter value, value is aspect ratio 
-
-def match_proportions(user_dir, sorted_alphabet):
- 
-	proportion_matches = {}
-
-	segments = os.listdir(user_dir)
-	if '.DS_Store' in segments:
-		segments.remove('.DS_Store')
-
-	# iterate through each of the segments and find best proportion matches for each segment 
-	for imgfile in segments:
-		img_url = os.path.abspath(os.path.join(user_dir, imgfile))
-		# print "Segments imglocation: ", img_url
-		img = cv.Image(img_url)
-		segment_ratio = float(img.width)/float(img.height)
-
-		closest = min(sorted_alphabet, key=lambda x:abs(x-segment_ratio))
-		index_pos = sorted_alphabet.index(closest)
-
-		# start has to be greater than 0 
-		start = index_pos - 3
-		if start < 0:
-			start = 0
-		# stop has to be within index range of alphabet list 
-		stop = index_pos + 3
-		if stop > len(sorted_alphabet)-1:
-			stop = -1
-
-		matches = sorted_alphabet[start:stop]
-		# print "This is segment ratio up top", segment_ratio
-		proportion_matches.setdefault(img.filename, matches)
-
-	return proportion_matches # a dictionary 
-
-def identify_letter(proportion_matches):
-	# proportion matches is a dict with imgfilename as key and letters that are top matching 
-	letter_proportions = {}
-	for key, value in proportion_matches.items():
-		name = key
-		letters = []
-		n=0
-		while n < len(value)-1:
-			aspect_ratio = value[n]
-			letter_values = model.session.query(model.Training_Letter.value).filter(model.Training_Letter.aspect_ratio == aspect_ratio).first()
-			letters.append(letter_values)
-			n+=1
-		letter_proportions.setdefault(name, letters)
-	return letter_proportions	# another dictionary - these are the letters that we want to run xor on 
-
-
 def run_comparisons(user_dir, templates_dir):
 
-	comparison_table = {}
-	
+	match_values = {}
 	segments = os.listdir(user_dir)
 	if '.DS_Store' in segments:
 		segments.remove('.DS_Store')
 
-
-
 	for imgfile in segments:
-		img_url = os.path.abspath(os.path.join(user_dir, imgfile))
-	
+
+		img_url = os.path.abspath(os.path.join(user_dir, imgfile))	
 		user_img = Image.open(img_url) # using PIL 
 		# deterine whether to check upper or lower[?]
 
@@ -141,12 +67,9 @@ def run_comparisons(user_dir, templates_dir):
 		if 'upper' in templates:
 			templates.remove('upper')
 
-
 		
 		for templatefile in templates:		
-
-
-			
+		
 			template_url = os.path.abspath(os.path.join(templates_dir, templatefile))
 			print "Template url: ", template_url
 			print "Templatefile", templatefile
@@ -160,11 +83,15 @@ def run_comparisons(user_dir, templates_dir):
 				user_img_resized = resize_to_smaller(user_img, template.size[0], template.size[1])
 
 				diff = difference_of_images(user_img_resized, template)
+
+				if user_img.filename not in match_values.keys():
+					match_values.setdefault(user_img.filename, [diff])
+				else:
+					match_values[user_img.filename].append(diff)				
 				
-				
-				comparison_table.setdefault(user_img.filename, []).append(diff)
-				# comparison_table[user_img.filename] = comparison_table.get(user_img.filename, [])
-			# comparison_table.setdefault(user_img.filename, [diff])
+				# match_values.setdefault(user_img.filename, []).append(diff)
+				# match_values[user_img.filename] = match_values.get(user_img.filename, [])
+				# match_values.setdefault(user_img.filename, [diff])
 
 			
 
@@ -174,57 +101,42 @@ def run_comparisons(user_dir, templates_dir):
 
 
 				diff = difference_of_images(user_img, template_resized)
-				
-				comparison_table.setdefault(user_img.filename, []).append(diff)
-				# comparison_table[user_img.filename] = comparison_table.get(user_img.filename, [])
+				if user_img.filename not in match_values.keys():
+
+					match_values.setdefault(user_img.filename, [diff])
+
+				else:
+					match_values[user_img.filename].append(diff)
+				# match_values[user_img.filename] = match_values.get(user_img.filename, [])
 
 		# run another function passing in comparison_table
-		# only continue if there is a bad match result :
-		break 
-				
-			
+		# only continue if there is a bad match result :	
 
-			
+		
 
-	return comparison_table
+	return match_values # a dictionary with imgname as key and 26 percentages 
 	
 
-		
-
-
-
-
-
-
-
-
-
-
-		
-
-
-
+	
 
 def resize_to_smaller(img, new_width, new_height): # passed in as PIL Images
 
-	
 	# new_width = smaller_img.size[0] # will this work with PIL 
 	# new_height = smaller_img.size[1]
-
 	resized_img = ImageOps.fit(img, (new_width, new_height), Image.ANTIALIAS, 0, (0.5, 0.5))
-
 	return resized_img # resized down to new width
-
-
 
 
 # only works when images are identically sized 
 def difference_of_images(user_img, template_img): # using XOR in python, passed in as PIL imgs
 
+	# loads pixel values into array 
 	pixel_user = numpy.asarray(user_img).flatten()
 	pixel_template = numpy.asarray(template_img).flatten()
 
+	# performs xor match 
 	difference = [i^j for i,j in zip(pixel_user, pixel_template)]	
+	difference2 = [i^j for i,j in zip(pixel_template, pixel_user)]
 	
 	# user_matrix = user_img.getNumpy().flatten()
 	# template_matrix = template_img.getNumpy().flatten()
@@ -232,9 +144,9 @@ def difference_of_images(user_img, template_img): # using XOR in python, passed 
 	# difference = [i ^ j for i, j in zip(user_matrix, template_matrix)]
 	# difference2 = [i ^ j for i, j in zip(template_matrix, user_matrix)]
 
-	#however many times 255 appears in the list
+	# however many times 255 appears in the list - however many times 
 	difference = difference.count(255)
-	# difference2 = difference2.count(255)
+	difference2 = difference2.count(255)
 
 	
 	percent_of_diff = difference/float(len(pixel_user))
@@ -249,36 +161,86 @@ def difference_of_images(user_img, template_img): # using XOR in python, passed 
 	# print percent_of_diff
 	#1 means complete difference; 0 means complete same
 
-			
+
+def find_letter_match(img_data):
+
+	letter_match_dict = {}
+		
+	for key in img_data.iterkeys():
+		min_value = min(img_data[key]) # finds lowest % diff from list
+		idx_pos = img_data[key].index(min_value)
+		print min_value, idx_pos
+		letter = chr(idx_pos + 97)
+		letter_match_dict.setdefault(key, [min_value, idx_pos, letter])
+
+	return letter_match_dict
+
+def perform_ocr(user_dir, img_data, letter_match_dict):
+	segments = os.listdir(user_dir)
+	if '.DS_Store' in segments:
+		segments.remove('.DS_Store')
+
+	segments = sorted_nicely(segments)
+
+	output = ""
+	for imgfile in segments:
+
+		img_url = os.path.abspath(os.path.join(user_dir, imgfile))	
+		print "This is the img_url", img_url
+		print "This is the imgfile", imgfile
+		letter = letter_match_dict[img_url][2]
+		output += letter
+
+	print "It looks like your image says: %s" % (output) 
 
 
 
 		
 
-
+def sorted_nicely(list):
+    """ Sorts the given iterable in the way that is expected.
+ 
+    Required arguments:
+    l -- The iterable to be sorted.
+ 
+    """
+    convert = lambda text: int(text) if text.isdigit() else text
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    return sorted(list, key = alphanum_key)
 
 
 
 def main():
-	# sorted_alphabet = sort_alphabet()
-	# # directory = 'user_image'
-	# # add_user_image(directory) # commits user images to database
-	# p = match_proportions('user_image', sorted_alphabet) # return dictionary 
-	# letters = identify_letter(p) # another dictionary
 
-	# make_alphabet_dictionary()
-
-	comparison_table = run_comparisons('user_image', 'training_alphabet/Arial')
+	# directory = 'user_image'
+	# add_user_image(directory) # commits user images to database
 	
-	for key in comparison_table.iterkeys():
-		match_list = comparison_table[key]
-		min_value = min(match_list)
-		idx_pos = match_list.index(min_value)
-	print "This is the key: ", key, '\n', "This is the idx posiiton:", idx_pos
-	print "This is the min_value", min_value
-	print "This is the match_list", match_list
-	mylist = sorted(match_list)
-	print "This is the sorted match list", mylist
+
+	img_data = run_comparisons('user_image', 'training_alphabet/Arial')
+
+	list_of_segments = img_data.keys()
+
+	letter_match_dict = find_letter_match(img_data)
+
+	# print letter_match_dict.items()
+
+	perform_ocr('user_image', img_data, letter_match_dict)
+	# runs ocr on user_image segments using dictionary created from find_letter_match  
+
+	# match = find_letter_match(img_data, list_of_segments)
+	# print match 
+	# letter = find_letter_match(img_data, '/Users/gwongz/src/hackbright/project/user_image/segment_0.png')
+	# print letter 
+	
+	# for key in img_data.iterkeys():
+	# 	match_list = img_data[key]
+	# 	min_value = min(match_list)
+	# 	idx_pos = match_list.index(min_value)
+	# print "This is the key: ", key, '\n', "This is the idx posiiton:", idx_pos
+	# print "This is the min_value", min_value
+	# print "This is the match_list", match_list
+	# mylist = sorted(match_list)
+	# print "This is the sorted match list", mylist
 
 	# identify_letter()
 	# get_user_images()
