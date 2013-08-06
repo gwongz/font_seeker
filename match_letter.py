@@ -144,6 +144,8 @@ def run_comparisons(user_dir, templates_dir):
 
 		
 		for templatefile in templates:		
+
+
 			
 			template_url = os.path.abspath(os.path.join(templates_dir, templatefile))
 			print "Template url: ", template_url
@@ -153,11 +155,12 @@ def run_comparisons(user_dir, templates_dir):
 			print "This is template size: ", template.size
 
 			if user_img.size > template.size:
-
+				print "User_img.size is bigger than template size: ", user_img.size, template.size
 				# if user image is bigger, size it down to template size
 				user_img_resized = resize_to_smaller(user_img, template.size[0], template.size[1])
-				diff = difference_of_images(user_img, template)
 
+				diff = difference_of_images(user_img_resized, template)
+				
 				
 				comparison_table.setdefault(user_img.filename, []).append(diff)
 				# comparison_table[user_img.filename] = comparison_table.get(user_img.filename, [])
@@ -170,13 +173,16 @@ def run_comparisons(user_dir, templates_dir):
 				print template_resized.size
 
 
-				diff = difference_of_images(user_img, template)
+				diff = difference_of_images(user_img, template_resized)
+				
 				comparison_table.setdefault(user_img.filename, []).append(diff)
 				# comparison_table[user_img.filename] = comparison_table.get(user_img.filename, [])
 
-
+		# run another function passing in comparison_table
+		# only continue if there is a bad match result :
+		break 
 				
-			# comparison_table.setdefault(user_img.filename, [diff])
+			
 
 			
 
@@ -213,7 +219,7 @@ def resize_to_smaller(img, new_width, new_height): # passed in as PIL Images
 
 
 # only works when images are identically sized 
-def difference_of_images(user_img, template_img): # using XOR in python, passed in as simplecv imgs
+def difference_of_images(user_img, template_img): # using XOR in python, passed in as PIL imgs
 
 	pixel_user = numpy.asarray(user_img).flatten()
 	pixel_template = numpy.asarray(template_img).flatten()
@@ -262,8 +268,17 @@ def main():
 
 	# make_alphabet_dictionary()
 
-	font_table = run_comparisons('user_image', 'training_alphabet/Arial')
-	print font_table.items()
+	comparison_table = run_comparisons('user_image', 'training_alphabet/Arial')
+	
+	for key in comparison_table.iterkeys():
+		match_list = comparison_table[key]
+		min_value = min(match_list)
+		idx_pos = match_list.index(min_value)
+	print "This is the key: ", key, '\n', "This is the idx posiiton:", idx_pos
+	print "This is the min_value", min_value
+	print "This is the match_list", match_list
+	mylist = sorted(match_list)
+	print "This is the sorted match list", mylist
 
 	# identify_letter()
 	# get_user_images()
