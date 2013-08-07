@@ -22,7 +22,7 @@ class Font(Base):
 	family = Column(String(100))
 
 
-class Training_Letter (Base):
+class Training_Letter(Base):
 	__tablename__ = 'training_letters'
 	id = Column(Integer, primary_key = True, autoincrement = True)
 	value = Column(Integer)

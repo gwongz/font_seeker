@@ -27,14 +27,14 @@ def download_fonts(font_urls):
 	fontpath = 'templates'
 	font_dict = {}
 	# [0:51]:
-	for url in font_urls:
+	for url in font_urls[0:20]:
 		# rename downloaded file to 'font_name.ttf'
 		name = url.split("=")[-1] 
 		name = name.strip(',')
 		name += '.ttf'
 		font_dict.setdefault(name, url)
 		# downloads the file and saves it to the templates directory as '.ttf file'
-		# urllib.urlretrieve(url, os.path.join(fontpath, name))
+		urllib.urlretrieve(url, os.path.join(fontpath, name))
 	return font_dict
 
 def write_fonts_to_master(font_dict, myfile):
