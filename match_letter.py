@@ -12,7 +12,7 @@ from seed import load_user_image
 
 
 
-"""Identifies letter of alphabet for each segment stored in 'user' directory"""
+"""Identifies letter of alphabet for each segment stored in 'user' directory and then matches to font"""
 
 
 def clear_user_image(session):
@@ -43,7 +43,6 @@ def add_user_image(directory):
 		bounds = blobs[-1].boundingBox()
 		
 		crop = img.crop(bounds).save(name)
-
 		load_user_image(session, img_location, file_url) # location is abs path, file_url is relative path 
 
 
@@ -88,29 +87,18 @@ def run_comparisons(user_dir, templates_dir):
 					match_values.setdefault(user_img.filename, [diff])
 				else:
 					match_values[user_img.filename].append(diff)				
-				
-				# match_values.setdefault(user_img.filename, []).append(diff)
-				# match_values[user_img.filename] = match_values.get(user_img.filename, [])
-				# match_values.setdefault(user_img.filename, [diff])
-
-			
 
 			else:
 				template_resized = resize_to_smaller(template, user_img.size[0], user_img.size[1])
 				print template_resized.size
-
-
 				diff = difference_of_images(user_img, template_resized)
+				
 				if user_img.filename not in match_values.keys():
-
 					match_values.setdefault(user_img.filename, [diff])
 
 				else:
-					match_values[user_img.filename].append(diff)
-				# match_values[user_img.filename] = match_values.get(user_img.filename, [])
-
-		# run another function passing in comparison_table
-		# only continue if there is a bad match result :	
+					match_values[user_img.filename].append(diff)	
+		# only continue if there is a bad match result?	
 
 		
 
@@ -119,16 +107,14 @@ def run_comparisons(user_dir, templates_dir):
 
 	
 
-def resize_to_smaller(img, new_width, new_height): # passed in as PIL Images
+def resize_to_smaller(img, new_width, new_height): # passed in as PIL imgs
 
-	# new_width = smaller_img.size[0] # will this work with PIL 
-	# new_height = smaller_img.size[1]
 	resized_img = ImageOps.fit(img, (new_width, new_height), Image.ANTIALIAS, 0, (0.5, 0.5))
 	return resized_img # resized down to new width
 
 
 # only works when images are identically sized 
-def difference_of_images(user_img, template_img): # using XOR in python, passed in as PIL imgs
+def difference_of_images(user_img, template_img): # passed in as PIL imgs
 
 	# loads pixel values into array 
 	pixel_user = np.asarray(user_img).flatten()
@@ -145,10 +131,9 @@ def difference_of_images(user_img, template_img): # using XOR in python, passed 
 	total_diff = float(diff) + float(diff2)
 	percent_of_diff = total_diff/float(len(pixel_user)+len(pixel_template))
 	
-	# percent_of_diff = difference/float(len(pixel_user))
 	print "This is the percent_of_diff", percent_of_diff
 	return percent_of_diff
-	#1 means complete difference; 0 means complete same
+	# 1 means complete difference; 0 means complete same
 
 
 def find_letter_match(img_data):
@@ -159,7 +144,10 @@ def find_letter_match(img_data):
 		min_value = min(img_data[key]) # finds lowest % diff from list
 		idx_pos = img_data[key].index(min_value)
 		print min_value, idx_pos
-		letter = chr(idx_pos + 97)
+		if idx_pos < 26:
+			letter = chr(idx_pos + 97) # if lower 
+		else:
+			letter = chr(idx_pos + 65) # if upper 
 		letter_match_dict.setdefault(key, [min_value, idx_pos, letter])
 
 	return letter_match_dict
@@ -243,33 +231,27 @@ def match_font(process_letter_list):
 			print "This is the fontname: ", font_name
 			
 			if font_name not in font_table.keys():
-
 				font_table.setdefault(font_name, [diff])
 
 			else:
 				font_table[font_name].append(diff)
+		
 		n+=1
 		print 'This is n at the bottom: ', n 
 
-
 	return font_table
+
 
 def rank_fonts(font_table):
 	for key, value in font_table.items():
 		print "Key, value:", key, value, '\n\n\n'  
 
 	least_difference = min(font_table.iteritems(), key=lambda (k,v): np.mean(v))
-
 	print "This is the font with the least_difference with iteritems: ", least_difference
 
-	print "This is the key for the least_difference:" , least_difference
-
 	items = least_difference
-
 	font = str(least_difference[0])
-	
 	# font = font.encode('utf-8')
-
 	print "It looks like this is the font you're looking for: ", font
 
 
@@ -282,8 +264,8 @@ def sorted_nicely(list):
 
 def main():
 
-	directory = 'user_image' # 
-	add_user_image(directory) # commits user images to database
+	# directory = 'user_image' # run this fcn once 
+	# add_user_image(directory) # commits user images to database
 	# template_directory = 'training_alphabet/Arial'
 
 	img_data = run_comparisons('user_image', 'training_alphabet/Arial')
