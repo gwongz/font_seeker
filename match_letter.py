@@ -1,15 +1,15 @@
 
 import os
 import re
-import numpy 
+import numpy as np 
 from sys import argv
 from bisect import bisect_left, bisect_right
-# from PIL import Image, ImageChops
-# from SimpleCV import Image 
 from PIL import Image, ImageOps
 import SimpleCV as cv
-import seed
+
 import model 
+from seed import load_user_image
+
 
 
 """Identifies letter of alphabet for each segment stored in 'user' directory"""
@@ -44,7 +44,7 @@ def add_user_image(directory):
 		
 		crop = img.crop(bounds).save(name)
 
-		seed.load_user_image(session, img_location, file_url) # location is abs path, file_url is relative path 
+		load_user_image(session, img_location, file_url) # location is abs path, file_url is relative path 
 
 
 def run_comparisons(user_dir, templates_dir):
@@ -131,34 +131,23 @@ def resize_to_smaller(img, new_width, new_height): # passed in as PIL Images
 def difference_of_images(user_img, template_img): # using XOR in python, passed in as PIL imgs
 
 	# loads pixel values into array 
-	pixel_user = numpy.asarray(user_img).flatten()
-	pixel_template = numpy.asarray(template_img).flatten()
+	pixel_user = np.asarray(user_img).flatten()
+	pixel_template = np.asarray(template_img).flatten()
 
 	# performs xor match 
 	difference = [i^j for i,j in zip(pixel_user, pixel_template)]	
 	difference2 = [i^j for i,j in zip(pixel_template, pixel_user)]
+
+	# however many times 255 appears in the list
+	diff = difference.count(255)
+	diff2 = difference2.count(255)
+
+	total_diff = float(diff) + float(diff2)
+	percent_of_diff = total_diff/float(len(pixel_user)+len(pixel_template))
 	
-	# user_matrix = user_img.getNumpy().flatten()
-	# template_matrix = template_img.getNumpy().flatten()
-
-	# difference = [i ^ j for i, j in zip(user_matrix, template_matrix)]
-	# difference2 = [i ^ j for i, j in zip(template_matrix, user_matrix)]
-
-	# however many times 255 appears in the list - however many times 
-	difference = difference.count(255)
-	difference2 = difference2.count(255)
-
-	
-	percent_of_diff = difference/float(len(pixel_user))
+	# percent_of_diff = difference/float(len(pixel_user))
 	print "This is the percent_of_diff", percent_of_diff
-
 	return percent_of_diff
-	
-	
-	# total_diff = float(len(difference)) + float(len(difference2))
-	# pixel_count = float(len(img1)) + float(len(img2))
-	# percent_of_diff = total_diff/pixel_count
-	# print percent_of_diff
 	#1 means complete difference; 0 means complete same
 
 
@@ -176,74 +165,143 @@ def find_letter_match(img_data):
 	return letter_match_dict
 
 def perform_ocr(user_dir, img_data, letter_match_dict):
+	
 	segments = os.listdir(user_dir)
 	if '.DS_Store' in segments:
 		segments.remove('.DS_Store')
 
 	segments = sorted_nicely(segments)
+	letters_to_process = []
 
-	output = ""
+	# output = ""
 	for imgfile in segments:
 
+		letter_tuple = []
 		img_url = os.path.abspath(os.path.join(user_dir, imgfile))	
-		print "This is the img_url", img_url
-		print "This is the imgfile", imgfile
 		letter = letter_match_dict[img_url][2]
-		output += letter
 
-	print "It looks like your image says: %s" % (output) 
-
-
+		letter_tuple.append(img_url)
+		letter_tuple.append(letter)
 
 		
+		letters_to_process.append(letter_tuple)
+
+		# letters_to_process.append(img_url)
+		# letters_to_process.append(letter)
+		# output += letter
+
+	# print "It looks like your image says: %s" % (output) 
+	return letters_to_process
+
+
+def match_font(process_letter_list):
+
+	letters = []
+	user_urls = []
+
+	for item in process_letter_list:
+		user_urls.append(item[0])
+		letters.append(item[1])
+
+	print "These are the user_urls:", user_urls
+	print "This is the first user_url:", user_urls[0]
+	
+	font_table = {}
+	n=0
+	while n < len(letters)-1:
+		print "This is n at the top: ", n 
+		user_img = Image.open(user_urls[n])
+		letter = letters[n] # gets you one letter
+		value = ord(letter)
+		templates = model.session.query(model.Letter.file_url).filter(model.Letter.value == value).all()	
+
+		template_urls = []
+		for t in templates:
+			template_urls.append(str(t[0])) # creates a list of template imgs that can be iterated through
+
+		for url in template_urls:	
+			file_location = url
+			template = Image.open(file_location)
+		
+		
+
+			if user_img.size > template.size:
+				print "User_img.size is bigger than template size: ", user_img.size, template.size
+				# if user image is bigger, size it down to template size
+				user_img_resized = resize_to_smaller(user_img, template.size[0], template.size[1])
+				diff = difference_of_images(user_img_resized, template)
+
+				
+			else:
+				template_resized = resize_to_smaller(template, user_img.size[0], user_img.size[1])
+				print template_resized.size
+				diff = difference_of_images(user_img, template_resized)
+
+			
+			# if diff <= 0.5:
+			font_name = model.session.query(model.Letter.font_name).filter(model.Letter.file_url==file_location).one()
+			print "This is the fontname: ", font_name
+			
+			if font_name not in font_table.keys():
+
+				font_table.setdefault(font_name, [diff])
+
+			else:
+				font_table[font_name].append(diff)
+		n+=1
+		print 'This is n at the bottom: ', n 
+
+
+	return font_table
+
+def rank_fonts(font_table):
+	for key, value in font_table.items():
+		print "Key, value:", key, value, '\n\n\n'  
+
+	least_difference = min(font_table.iteritems(), key=lambda (k,v): np.mean(v))
+
+	print "This is the font with the least_difference with iteritems: ", least_difference
+
+	print "This is the key for the least_difference:" , least_difference
+
+	items = least_difference
+
+	font = str(least_difference[0])
+	
+	# font = font.encode('utf-8')
+
+	print "It looks like this is the font you're looking for: ", font
+
 
 def sorted_nicely(list):
-    """ Sorts the given iterable in the way that is expected.
- 
-    Required arguments:
-    l -- The iterable to be sorted.
- 
-    """
+    """ Sorts the given iterable in the way that is expected"""
     convert = lambda text: int(text) if text.isdigit() else text
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     return sorted(list, key = alphanum_key)
 
 
-
 def main():
 
-	# directory = 'user_image'
-	# add_user_image(directory) # commits user images to database
-	
+	directory = 'user_image' # 
+	add_user_image(directory) # commits user images to database
+	# template_directory = 'training_alphabet/Arial'
 
 	img_data = run_comparisons('user_image', 'training_alphabet/Arial')
-
-	list_of_segments = img_data.keys()
+	# returns dictionary that has as values: list of ALL xor matches per segment
 
 	letter_match_dict = find_letter_match(img_data)
+	# returns dictionary that has as values: list of smallest xor difference 
+	# value, idx position in img_data list, letter_of_alphabet (idx + 97 or idx + 65) 
 
-	# print letter_match_dict.items()
+	letters_to_process = perform_ocr('user_image', img_data, letter_match_dict)
+	# runs ocr on user_image segments using dictionary created from find_letter_match 
+	# returns a sorted list of dictionaries [{segment: letter}]
 
-	perform_ocr('user_image', img_data, letter_match_dict)
-	# runs ocr on user_image segments using dictionary created from find_letter_match  
-
-	# match = find_letter_match(img_data, list_of_segments)
-	# print match 
-	# letter = find_letter_match(img_data, '/Users/gwongz/src/hackbright/project/user_image/segment_0.png')
-	# print letter 
+	font_table = match_font(letters_to_process)
 	
-	# for key in img_data.iterkeys():
-	# 	match_list = img_data[key]
-	# 	min_value = min(match_list)
-	# 	idx_pos = match_list.index(min_value)
-	# print "This is the key: ", key, '\n', "This is the idx posiiton:", idx_pos
-	# print "This is the min_value", min_value
-	# print "This is the match_list", match_list
-	# mylist = sorted(match_list)
-	# print "This is the sorted match list", mylist
+	rank_fonts(font_table)
 
-	# identify_letter()
-	# get_user_images()
+
 
 if __name__ == "__main__":
 	main()
