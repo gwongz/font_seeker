@@ -17,28 +17,10 @@ def load_image(imgname):
 	columns = []
 	for y in range(width):
 		columns.append([pixels[y,x] for x in range(height)])
+		# column returns color at coordinate (y,x) - read as 
+		# row[4] column[0]
 
 	return width, height, columns, img
-
-# def get_image_grid(imgname):
-# 	pixels = img.load()
-# 	grid = []
-# 	for y in range(height):
-# 		grid.append([pixels[x,y] for x in range(width)])
-
-# 	return grid 
-	# grid[0][0] returns color at (x,y)	
-	# don't need this function right now 
-	# grid[x][y] = columns[y][x]
-
-# def get_column(grid): # stores rows from image grid as columns
-# 	pixels = img.load()
-# 	columns = []
-# 	for y in range(width):
-# 		columns.append([pixels[y,x] for x in range(height)])
-# 	return columns
-	# column returns color at coordinate (y,x) - read as 
-	# row[4] column[0]
 
 
 def first_black(width, height, columns, current_col):
@@ -91,6 +73,8 @@ def get_segments(slices, height, img):
 	if not os.path.exists('user_image'):
 		os.mkdir('user_image')
 
+	# need to add a fcn to clear the contents of 'user_image folder if it exists'
+
 	segments = [] 
 	n=0
 
@@ -115,8 +99,6 @@ def get_segments(slices, height, img):
 			break
 
 	return segments # returns list of all the cropped and segmented imgs
-
-# should add function to get x bounds
 
 def main():
 	script, input_file = argv
