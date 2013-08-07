@@ -40,9 +40,10 @@ def add_user_image(directory):
 
 		img = cv.Image(img_location)
 		blobs = img.binarize().findBlobs()
-		bounds = blobs[-1].boundingBox()
-		
-		crop = img.crop(bounds).save(name)
+		if blobs != None:
+			bounds = blobs[-1].boundingBox()
+			crop = img.crop(bounds).save(name)
+
 		load_user_image(session, img_location, file_url) # location is abs path, file_url is relative path 
 
 
@@ -196,7 +197,7 @@ def match_font(process_letter_list):
 	
 	font_table = {}
 	n=0
-	while n < len(letters)-1:
+	while n < len(letters):
 		print "This is n at the top: ", n 
 		user_img = Image.open(user_urls[n])
 		letter = letters[n] # gets you one letter
@@ -264,8 +265,8 @@ def sorted_nicely(list):
 
 def main():
 
-	# directory = 'user_image' # run this fcn once 
-	# add_user_image(directory) # commits user images to database
+	directory = 'user_image' # run this fcn once 
+	add_user_image(directory) # commits user images to database
 	# template_directory = 'training_alphabet/Arial'
 
 	img_data = run_comparisons('user_image', 'training_alphabet/Arial')
@@ -278,6 +279,8 @@ def main():
 	letters_to_process = perform_ocr('user_image', img_data, letter_match_dict)
 	# runs ocr on user_image segments using dictionary created from find_letter_match 
 	# returns a sorted list of dictionaries [{segment: letter}]
+
+	# print letters_to_process
 
 	font_table = match_font(letters_to_process)
 	
