@@ -8,25 +8,17 @@ from PIL import Image, ImageOps
 import SimpleCV as cv
 
 import model 
-from seed import load_user_image
+from seed import load_user_image, clear_user
 
 
 
 """Identifies letter of alphabet for each segment stored in 'user' directory and then matches to font"""
 
-
-def clear_user_image(session):
-	user_img = model.session.query(model.User_Image).all()
-	
-	for imgfile in user_img:
-		session.delete(imgfile)
-		session.commit()
-
 def add_user_image(directory):
 
 	# clear db before storing what's been added to user directory	
 	session = model.session
-	clear_user_image(session)
+	clear_user(session)
 
 	segments = os.listdir(directory)
 	if '.DS_Store' in segments:
@@ -44,7 +36,7 @@ def add_user_image(directory):
 			bounds = blobs[-1].boundingBox()
 			crop = img.crop(bounds).save(name)
 
-		load_user_image(session, img_location, file_url) # location is abs path, file_url is relative path 
+		load_user_image(session, img_location, file_url) # location is abs path, file_url is relative path, fcn in seed.py 
 
 
 def run_comparisons(user_dir, templates_dir):
