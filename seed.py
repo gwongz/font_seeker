@@ -109,6 +109,13 @@ def load_fonts(session, directory):
 			session.add(font)
 			session.commit()
 
+def clear_user(session):
+	user_img = model.session.query(model.User_Image).all()
+	
+	for imgfile in user_img:
+		session.delete(imgfile)
+		session.commit()
+
 
 def main(session):
 	# directory = 'training_alphabet' or directory = 'templates'
