@@ -2,11 +2,6 @@ import os
 import string
 import PIL
 from SimpleCV import Image, ImageSet
-# from SimpleCV import Image
-
-# from PIL import Image, ImageDraw, ImageFont
-
-
 
 
 """Draws uppercase and lowercase samples for fonts located in 'fonts' directory"""
@@ -23,7 +18,7 @@ def make_templates(root_directory):
 		return
 
 	if '.DS_Store' in ttfs:
-			ttfs.remove('.DS_Store')
+		ttfs.remove('.DS_Store')
 
 	for fontfile in ttfs:
 		# fontpath is where the ttf file is located 
@@ -67,7 +62,7 @@ def draw_letters(fontpath, shortname, font_directory, letter_range):
 
 def crop_letters(directory):
 
-	# looks for .png sample files in fonts directory and appends to dict by letter 
+	# looks for .png sample files in fonts directory  
 	for dirpath, dirnames, fnames in os.walk(directory):
 	    for f in fnames:
 	        if f.endswith('.png'):
@@ -80,9 +75,12 @@ def crop_letters(directory):
 def main():
 
 	# root_directory = 'templates'
-	# make_templates(root_directory)
-	training_alphabet = make_templates('training_alphabet')
-	crop_letters('training_alphabet')
+	# fonts = make_templates(root_directory)
+
+	# training_alphabet = make_templates('training_alphabet')
+	# cropped_alphabet = crop_letters('training_alphabet')
+	# cropped_fonts = crop_letters('templates')
+	
 
 
 if __name__== "__main__":

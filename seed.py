@@ -20,6 +20,7 @@ def get_templates(directory):
 	  				
 	return templates_dict
 
+
 def get_image_info(templates_dict):
 	# updates dictionary with more info for loading to db
 
@@ -79,6 +80,7 @@ def load_training_letters(session, image_info):
 		session.add(training_letter)
 	session.commit()
 
+# this gets run in match_letter.py  
 def load_user_image(session, img_location, file_url):
 	img = Image(img_location)
 	width = img.width
@@ -93,12 +95,32 @@ def load_user_image(session, img_location, file_url):
 	session.add(user_image)
 	session.commit()
 
+def load_fonts(session, directory):
+	font_files = os.listdir(directory)
+	if '.DS_Store' in font_files:
+		font_files.remove('.DS_Store')
+
+	for f in font_files:
+		if f.endswith('.ttf') or f.endswith('.ttc'):
+			name = f.split('.')[0]
+		
+			font = model.Font(name = name)
+
+			session.add(font)
+			session.commit()
+
 
 def main(session):
 	# directory = 'training_alphabet' or directory = 'templates'
-	alphabet_dict = get_templates(directory)
-	alphabet_info = get_image_info(alphabet_dict)	
-	load_training_letters(session, alphabet_info)
+	# directory = 'training_alphabet'
+	# alphabet_dict = get_templates(directory)
+	# alphabet_info = get_image_info(alphabet_dict)	
+	# load_training_letters(session, alphabet_info)
+	letters_dict = get_templates('templates')
+	letter_info = get_image_info(letters_dict)
+	load_letters(session, letter_info)
+
+	# load_fonts(session, 'templates')
 
 
 if __name__ == "__main__":
