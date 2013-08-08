@@ -45,23 +45,33 @@ def run_comparisons(user_dir, templates_dir):
 	if '.DS_Store' in segments:
 		segments.remove('.DS_Store')
 
+	templates = []
+	for dirpath, dirnames, fnames in os.walk(templates_dir):
+	    	for f in fnames:
+	       		if f.endswith('.png'):
+	       			templates.append(f)
+
+	print "These are the user segments. They should be in alphanumeric order: ", segments
+	print "These are the templates. They should be in alphabetic order: ", templates
+
+
+
+
 	for imgfile in segments:
 
 		img_url = os.path.abspath(os.path.join(user_dir, imgfile))	
 		user_img = Image.open(img_url) # using PIL 
 		# deterine whether to check upper or lower[?]
 
+		count = 0 
+		for templatefile in templates:
 
-		templates = os.listdir(templates_dir)
-		if '.DS_Store' in templates:
-			templates.remove('.DS_Store')
-		if 'upper' in templates:
-			templates.remove('upper')
+			if count > 26:
+				template_url = os.path.abspath(os.path.join(templates_dir+'/upper', templatefile))
 
-
-		for templatefile in templates:		
-
-			template_url = os.path.abspath(os.path.join(templates_dir, templatefile))
+			else:
+				template_url = os.path.abspath(os.path.join(templates_dir+'/lower', templatefile))
+			
 			print "Template url: ", template_url
 			print "Templatefile", templatefile
 
@@ -89,7 +99,9 @@ def run_comparisons(user_dir, templates_dir):
 					match_values.setdefault(user_img.filename, [diff])
 
 				else:
-					match_values[user_img.filename].append(diff)	
+					match_values[user_img.filename].append(diff)
+
+			count +=1	
 		# only continue if there is a bad match result?	
 
 
@@ -133,13 +145,13 @@ def find_letter_match(img_data):
 	letter_match_dict = {}
 
 	for key in img_data.iterkeys():
-		min_value = min(img_data[key]) # finds lowest % diff from list
+		min_value = min(img_data[key]) # finds lowest % diff from list, 0 is a perfect match 
 		idx_pos = img_data[key].index(min_value)
 		print min_value, idx_pos
 		if idx_pos < 26:
 			letter = chr(idx_pos + 97) # if lower 
 		else:
-			letter = chr(idx_pos + 65) # if upper 
+			letter = chr(idx_pos + 39) # if upper 
 		letter_match_dict.setdefault(key, [min_value, idx_pos, letter])
 
 	return letter_match_dict
@@ -260,32 +272,30 @@ def sorted_nicely(list):
 
 def main():
 
-	# directory = 'user_image' # run this fcn once 
-	# add_user_image(directory) # commits user images to database
-	# template_directory = 'training_alphabet/Arial'
+	user_dir = 'user_image'  
+	# add_user_image(directory) # commits user images to database, run 
+	templates_dir = 'training_alphabet/Arial'
 
-	img_data = run_comparisons('user_image', 'training_alphabet/Arial/lower')
-	# returns dictionary that has as values: list of ALL xor matches per segment
+	img_data = run_comparisons(user_dir, templates_dir)
+	# returns dictionary that has as values: list of ALL xor matches per segment for lowercase
 
 	letter_match_dict = find_letter_match(img_data)
 	# returns dictionary that has as values: list of smallest xor difference 
 	# value, idx position in img_data list, letter_of_alphabet (idx + 97 or idx + 65) 
+	for item in letter_match_dict.items():
+		print item, '\n'
+	# letters_to_process = perform_ocr('user_image', img_data, letter_match_dict)
+	# # runs ocr on user_image segments using dictionary created from find_letter_match 
+	# # returns a sorted list of dictionaries [{segment: letter}]
 
-	letters_to_process = perform_ocr('user_image', img_data, letter_match_dict)
-	# runs ocr on user_image segments using dictionary created from find_letter_match 
-	# returns a sorted list of dictionaries [{segment: letter}]
+	# # print letters_to_process
 
-	# print letters_to_process
+	# font_table = match_font(letters_to_process)
 
-	font_table = match_font(letters_to_process)
-
-	rank_fonts(font_table)
+	# rank_fonts(font_table)
 
 
 
 if __name__ == "__main__":
 	main()
-
-
-
 
