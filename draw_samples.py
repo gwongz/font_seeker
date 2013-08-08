@@ -32,13 +32,15 @@ def make_templates(root_directory):
 		if not os.path.exists(font_directory): # if the font_directory doesn't exist, make it
 			os.mkdir(font_directory) # makes directory for each font 
 			# makes sub-directory for uppercase samples
+			os.mkdir(font_directory+'/lower')
 			os.mkdir(font_directory+'/upper') # makes a sub folder for uppercase fonts
 
 		lower = string.ascii_lowercase
 		upper = string.ascii_uppercase
 		
 		# draws samples for each font 
-		draw_letters(fontpath, shortname, font_directory, lower)
+	
+		draw_letters(fontpath, shortname, font_directory+'/lower', lower) # change 
 		draw_letters(fontpath, shortname, font_directory+'/upper', upper)
 
 
@@ -47,6 +49,8 @@ def draw_letters(fontpath, shortname, font_directory, letter_range):
 
 	for letter in letter_range:
 		letterpath = os.path.abspath(os.path.join(font_directory, letter+'.png'))
+		print "This is the letterpath:" , letterpath
+		print "This is the font_directory"
 		
 		# if sample file doesn't already exist, then make one
 		if not os.path.exists(letterpath): 
@@ -74,14 +78,14 @@ def crop_letters(directory):
 	        
 def main():
 
-	# root_directory = 'templates'
-	# fonts = make_templates(root_directory)
+	root_directory = 'templates'
+	fonts = make_templates(root_directory)
+	cropped_fonts = crop_letters('templates')
+
 
 	# training_alphabet = make_templates('training_alphabet')
 	# cropped_alphabet = crop_letters('training_alphabet')
-	# cropped_fonts = crop_letters('templates')
 	
 
-
-if __name__== "__main__":
+if __name__ == "__main__":
 	main()
