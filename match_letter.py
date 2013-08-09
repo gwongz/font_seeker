@@ -51,10 +51,8 @@ def run_comparisons(user_dir, templates_dir):
 	       		if f.endswith('.png'):
 	       			templates.append(f)
 
-	print "These are the user segments. They should be in alphanumeric order: ", segments
-	print "These are the templates. They should be in alphabetic order: ", templates
-
-
+	# print "These are the user segments. They should be in alphanumeric order: ", segments
+	# print "These are the templates. They should be in alphabetic order: ", templates
 
 
 	for imgfile in segments:
@@ -78,8 +76,8 @@ def run_comparisons(user_dir, templates_dir):
 			template = Image.open(template_url)
 			print "This is template size: ", template.size
 
-			if user_img.size > template.size:
-				print "User_img.size is bigger than template size: ", user_img.size, template.size
+			if user_img.size[0] > template.size:
+				# print "User_img.size is bigger than template size: ", user_img.size, template.size
 				# if user image is bigger, size it down to template size
 				user_img_resized = resize_to_smaller(user_img, template.size[0], template.size[1])
 
@@ -102,6 +100,8 @@ def run_comparisons(user_dir, templates_dir):
 					match_values[user_img.filename].append(diff)
 
 			count +=1	
+
+
 		# only continue if there is a bad match result?	
 
 
@@ -195,13 +195,10 @@ def match_font(process_letter_list):
 		user_urls.append(item[0])
 		letters.append(item[1])
 
-	print "These are the user_urls:", user_urls
-	print "This is the first user_url:", user_urls[0]
-
 	font_table = {}
 	n=0
 	while n < len(letters):
-		print "This is n at the top: ", n 
+		# print "This is n at the top: ", n 
 		user_img = Image.open(user_urls[n])
 		letter = letters[n] # gets you one letter
 		value = ord(letter)
@@ -210,19 +207,16 @@ def match_font(process_letter_list):
 		template_urls = []
 		for t in templates:
 			template_urls.append(str(t[0])) # creates a list of template imgs that can be iterated through
-			print "This is t:", t 
-			print "This is template_urls", template_urls
-
+	
 		for url in template_urls:
-			print "This is the url: ", url 	
-		
+			
 			file_location = url 
 			template = Image.open(file_location)
 
 
 
-			if user_img.size > template.size:
-				print "User_img.size is bigger than template size: ", user_img.size, template.size
+			if user_img.size[0] > template.size[0]:
+				# print "User_img.size is bigger than template size: ", user_img.size, template.size
 				# if user image is bigger, size it down to template size
 				user_img_resized = resize_to_smaller(user_img, template.size[0], template.size[1])
 				diff = difference_of_images(user_img_resized, template)
@@ -230,13 +224,13 @@ def match_font(process_letter_list):
 
 			else:
 				template_resized = resize_to_smaller(template, user_img.size[0], user_img.size[1])
-				print template_resized.size
+				# print template_resized.size
 				diff = difference_of_images(user_img, template_resized)
 
 
 			# if diff <= 0.5:
 			font_name = model.session.query(model.Letter.font_name).filter(model.Letter.file_url==file_location).one()
-			print "This is the fontname: ", font_name
+			# print "This is the fontname: ", font_name
 
 			if font_name not in font_table.keys():
 				font_table.setdefault(font_name, [diff])
@@ -245,7 +239,7 @@ def match_font(process_letter_list):
 				font_table[font_name].append(diff)
 
 		n+=1
-		print 'This is n at the bottom: ', n 
+		# print 'This is n at the bottom: ', n 
 
 	return font_table
 
@@ -253,14 +247,14 @@ def match_font(process_letter_list):
 def rank_fonts(font_table):
 	for key, value in font_table.items():
 		print "Key, value:", key, value, '\n\n\n'  
-
+		
 	least_difference = min(font_table.iteritems(), key=lambda (k,v): np.mean(v))
-	print "This is the font with the least_difference with iteritems: ", least_difference
+	# print "This is the font with the least_difference with iteritems: ", least_difference
+	font = least_difference[0][0]
 
-	items = least_difference
-	font = str(least_difference[0])
-	# font = font.encode('utf-8')
-	print "It looks like this is the font you're looking for: ", font
+	print "It looks like this is the font you're looking for: %s" % (font)
+
+	
 
 
 def sorted_nicely(list):
@@ -282,17 +276,16 @@ def main():
 	letter_match_dict = find_letter_match(img_data)
 	# returns dictionary that has as values: list of smallest xor difference 
 	# value, idx position in img_data list, letter_of_alphabet (idx + 97 or idx + 65) 
-	for item in letter_match_dict.items():
-		print item, '\n'
-	# letters_to_process = perform_ocr('user_image', img_data, letter_match_dict)
+
+	
+	letters_to_process = perform_ocr(user_dir, img_data, letter_match_dict)
 	# # runs ocr on user_image segments using dictionary created from find_letter_match 
 	# # returns a sorted list of dictionaries [{segment: letter}]
 
-	# # print letters_to_process
+	font_table = match_font(letters_to_process)
+	
+	result = rank_fonts(font_table)
 
-	# font_table = match_font(letters_to_process)
-
-	# rank_fonts(font_table)
 
 
 
