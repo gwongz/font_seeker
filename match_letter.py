@@ -1,8 +1,8 @@
 import os
 import re
 import numpy as np 
+import cProfile 
 from sys import argv
-from bisect import bisect_left, bisect_right
 from PIL import Image, ImageOps
 import SimpleCV as cv
 
@@ -38,18 +38,18 @@ def add_user_image(directory):
 		load_user_image(session, img_location, file_url) # location is abs path, file_url is relative path, fcn in seed.py 
 
 
-def run_comparisons(user_dir, templates_dir):
+def get_letter(user_dir, ocr_dir):
 
-	match_values = {}
+	ocr_dict = {}
 	segments = os.listdir(user_dir)
 	if '.DS_Store' in segments:
 		segments.remove('.DS_Store')
 
-	templates = []
-	for dirpath, dirnames, fnames in os.walk(templates_dir):
+	ocr_alphabet = []
+	for dirpath, dirnames, fnames in os.walk(ocr_dir):
 	    	for f in fnames:
 	       		if f.endswith('.png'):
-	       			templates.append(f)
+	       			ocr_alphabet.append(f)
 
 	# print "These are the user segments. They should be in alphanumeric order: ", segments
 	# print "These are the templates. They should be in alphabetic order: ", templates
@@ -62,51 +62,47 @@ def run_comparisons(user_dir, templates_dir):
 		# deterine whether to check upper or lower[?]
 
 		count = 0 
-		for templatefile in templates:
+		for letter in ocr_alphabet:
 
 			if count > 26:
-				template_url = os.path.abspath(os.path.join(templates_dir+'/upper', templatefile))
+				letter_url = os.path.abspath(os.path.join(ocr_dir+'/upper', letter))
 
 			else:
-				template_url = os.path.abspath(os.path.join(templates_dir+'/lower', templatefile))
+				letter_url = os.path.abspath(os.path.join(ocr_dir+'/lower', letter))
 			
-			print "Template url: ", template_url
-			print "Templatefile", templatefile
+			print "OCR template url: ", letter_url
+			print "OCR template letter", letter 
 
-			template = Image.open(template_url)
-			print "This is template size: ", template.size
+			letter = Image.open(letter_url)
+			# print "This is the template size: ", letter.size
 
-			if user_img.size[0] > template.size:
-				# print "User_img.size is bigger than template size: ", user_img.size, template.size
+			if user_img.size[0] > letter.size:
+				print "The characters in your image are being resampled and compared to the OCR templates" 
 				# if user image is bigger, size it down to template size
-				user_img_resized = resize_to_smaller(user_img, template.size[0], template.size[1])
+				user_img_resized = resize_to_smaller(user_img, letter.size[0], letter.size[1])
 
-				diff = difference_of_images(user_img_resized, template)
+				diff = difference_of_images(user_img_resized, letter)
 
-				if user_img.filename not in match_values.keys():
-					match_values.setdefault(user_img.filename, [diff])
+				if user_img.filename not in ocr_dict.keys():
+					ocr_dict.setdefault(user_img.filename, [diff])
 				else:
-					match_values[user_img.filename].append(diff)				
+					ocr_dict[user_img.filename].append(diff)				
 
 			else:
-				template_resized = resize_to_smaller(template, user_img.size[0], user_img.size[1])
-				print template_resized.size
-				diff = difference_of_images(user_img, template_resized)
+				print "The OCR template is being resampled and compared to the characters in your image"
+				letter_resized = resize_to_smaller(letter, user_img.size[0], user_img.size[1])
+				# print letter_resized.size
+				diff = difference_of_images(user_img, letter_resized)
 
-				if user_img.filename not in match_values.keys():
-					match_values.setdefault(user_img.filename, [diff])
+				if user_img.filename not in ocr_dict.keys():
+					ocr_dict.setdefault(user_img.filename, [diff])
 
 				else:
-					match_values[user_img.filename].append(diff)
+					ocr_dict[user_img.filename].append(diff)
 
-			count +=1	
-
-
-		# only continue if there is a bad match result?	
-
-
-
-	return match_values # a dictionary with imgname as key and 26 percentages 
+			count +=1
+		# only continue if there is a bad match result?
+	return ocr_dict # a dictionary with imgname as key and 52 percentages 
 
 
 
@@ -135,28 +131,28 @@ def difference_of_images(user_img, template_img): # passed in as PIL imgs
 	total_diff = float(diff) + float(diff2)
 	percent_of_diff = total_diff/float(len(pixel_user)+len(pixel_template))
 
-	print "This is the percent_of_diff", percent_of_diff
+	print "Percentage of difference between the two images:", percent_of_diff*100
 	return percent_of_diff
 	# 1 means complete difference; 0 means complete same
 
 
-def find_letter_match(img_data):
+def identify_letter(ocr_data):
 
-	letter_match_dict = {}
+	ocr_match_dict = {}
 
-	for key in img_data.iterkeys():
-		min_value = min(img_data[key]) # finds lowest % diff from list, 0 is a perfect match 
-		idx_pos = img_data[key].index(min_value)
+	for key in ocr_data.iterkeys():
+		min_value = min(ocr_data[key]) # finds lowest % diff from list, 0 is a perfect match 
+		idx_pos = ocr_data[key].index(min_value)
 		print min_value, idx_pos
 		if idx_pos < 26:
 			letter = chr(idx_pos + 97) # if lower 
 		else:
 			letter = chr(idx_pos + 39) # if upper 
-		letter_match_dict.setdefault(key, [min_value, idx_pos, letter])
+		ocr_match_dict.setdefault(key, [min_value, idx_pos, letter])
 
-	return letter_match_dict
+	return ocr_match_dict
 
-def perform_ocr(user_dir, img_data, letter_match_dict):
+def get_letters_to_process(user_dir, ocr_match_dict):
 
 	segments = os.listdir(user_dir)
 	if '.DS_Store' in segments:
@@ -170,7 +166,7 @@ def perform_ocr(user_dir, img_data, letter_match_dict):
 
 		letter_tuple = []
 		img_url = os.path.abspath(os.path.join(user_dir, imgfile))	
-		letter = letter_match_dict[img_url][2]
+		letter = ocr_match_dict[img_url][2]
 
 		letter_tuple.append(img_url)
 		letter_tuple.append(letter)
@@ -202,30 +198,28 @@ def match_font(process_letter_list):
 		user_img = Image.open(user_urls[n])
 		letter = letters[n] # gets you one letter
 		value = ord(letter)
-		templates = model.session.query(model.Letter.file_url).filter(model.Letter.value == value).all()	
+		fonts = model.session.query(model.Letter.file_url).filter(model.Letter.value == value).all()	
 
-		template_urls = []
-		for t in templates:
-			template_urls.append(str(t[0])) # creates a list of template imgs that can be iterated through
+		font_urls = []
+		for f in fonts:
+			font_urls.append(str(f[0])) # creates a list of template imgs that can be iterated through
 	
-		for url in template_urls:
+		for url in font_urls:
 			
 			file_location = url 
-			template = Image.open(file_location)
+			font = Image.open(file_location)
 
-
-
-			if user_img.size[0] > template.size[0]:
+			if user_img.size[0] > font.size[0]:
 				# print "User_img.size is bigger than template size: ", user_img.size, template.size
 				# if user image is bigger, size it down to template size
-				user_img_resized = resize_to_smaller(user_img, template.size[0], template.size[1])
-				diff = difference_of_images(user_img_resized, template)
+				user_img_resized = resize_to_smaller(user_img, font.size[0], font.size[1])
+				diff = difference_of_images(user_img_resized, font)
 
 
 			else:
-				template_resized = resize_to_smaller(template, user_img.size[0], user_img.size[1])
+				font_resized = resize_to_smaller(font, user_img.size[0], user_img.size[1])
 				# print template_resized.size
-				diff = difference_of_images(user_img, template_resized)
+				diff = difference_of_images(user_img, font_resized)
 
 
 			# if diff <= 0.5:
@@ -240,19 +234,21 @@ def match_font(process_letter_list):
 
 		n+=1
 		# print 'This is n at the bottom: ', n 
-
 	return font_table
 
 
 def rank_fonts(font_table):
 	for key, value in font_table.items():
-		print "Key, value:", key, value, '\n\n\n'  
-		
+		print "Ranking fonts...\n"
+		print "Font, rate of difference:", key, value, '\n\n\n'  
+
 	least_difference = min(font_table.iteritems(), key=lambda (k,v): np.mean(v))
 	# print "This is the font with the least_difference with iteritems: ", least_difference
 	font = least_difference[0][0]
 
-	print "It looks like this is the font you're looking for: %s" % (font)
+	return "It looks like this is the font you're looking for: %s" % (font) 
+
+
 
 	
 
@@ -267,24 +263,28 @@ def sorted_nicely(list):
 def main():
 
 	user_dir = 'user_image'  
-	# add_user_image(directory) # commits user images to database, run 
-	templates_dir = 'training_alphabet/Arial'
+	# add_user_image(user_dir) # commits user images to database, run 
+	ocr_dir = 'training_alphabet/Arial'
 
-	img_data = run_comparisons(user_dir, templates_dir)
+	ocr_data = get_letter(user_dir, ocr_dir)
 	# returns dictionary that has as values: list of ALL xor matches per segment for lowercase
 
-	letter_match_dict = find_letter_match(img_data)
+	ocr_match_dict = identify_letter(ocr_data)
 	# returns dictionary that has as values: list of smallest xor difference 
 	# value, idx position in img_data list, letter_of_alphabet (idx + 97 or idx + 65) 
 
 	
-	letters_to_process = perform_ocr(user_dir, img_data, letter_match_dict)
+	letters_to_process = get_letters_to_process(user_dir, ocr_match_dict)
 	# # runs ocr on user_image segments using dictionary created from find_letter_match 
 	# # returns a sorted list of dictionaries [{segment: letter}]
 
 	font_table = match_font(letters_to_process)
 	
 	result = rank_fonts(font_table)
+
+	return result 
+
+	
 
 
 
