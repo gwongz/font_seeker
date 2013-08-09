@@ -1,6 +1,8 @@
+import os, urllib
+from shutil import rmtree 
 from sys import argv
 from PIL import Image
-import os 
+
 import model 
 
 """Segments image into individual characters and saves to user_image directory"""
@@ -42,6 +44,20 @@ def all_white(width, height, columns, current_col):
 
 	return current_col
 
+# def first_black_row(width, height, rows, current_row):
+# 	while current_row < height:
+# 		if rows[current_row].count(0) >= 1:
+# 			return current_row
+# 		else:
+# 			current_row += 1
+
+# def all_white_row(width, height, rows, current_row):
+# 	while current_row < height:
+# 		if rows[current_row].count(255) == width:
+# 			return current_row
+# 		else:
+# 			current_row +=1
+# 	return current_row
 
 def scan_image(width, height, columns):
 	"""Finds vertical projection of image"""
@@ -49,7 +65,6 @@ def scan_image(width, height, columns):
 	current_col = 0
 
 	while current_col < width and current_col != None:
-
 
 		next_col = first_black(width, height, columns, current_col)
 		if next_col == None:
@@ -67,11 +82,33 @@ def scan_image(width, height, columns):
 	# slices = [(x, 0) for x in boundaries if x!= None] # a list of tuples, (x,y) where splits are 
 	return boundaries
 
+# def get_x_bounds(width, height, rows):
+# 	boundaries = []
+# 	current_row = 0
+
+# 	while current_row < height and current_row != None:
+# 		next_row = first_black_row(width, height, rows, current_row)
+# 		if next_row == None:
+# 			break
+
+# 		if next_row != None:
+# 			boundaries.append(next_row)
+# 			current_row = next_row
+
+# 			white_row = all_white_row(width, height, rows, current_row)
+# 			if white_row != None:
+# 				boundaries.append(white_row)
+# 				current_row = white_row
+# 	print "These are the x bounds", boundaries
+# 	return boundaries 
+
 def get_segments(slices, height, img):
 	# slices = [(0,0), (1,0)]
 	# slices = [(35,0), (67,0)]
-	if not os.path.exists('user_image'):
-		os.mkdir('user_image')
+	if os.path.exists('user_image'):
+		rmtree('user_image')
+
+	os.mkdir('user_image')
 
 	# need to add a fcn to clear the contents of 'user_image folder if it exists'
 
@@ -100,9 +137,12 @@ def get_segments(slices, height, img):
 
 	return segments # returns list of all the cropped and segmented imgs
 
-def main():
-	script, input_file = argv
-	imgname = input_file
+def main(imgname):
+	# script, input_file = argv
+	# imgname = input_file
+
+	urllib.urlretrieve(imgname, 'user_img.jpg')
+	imgname = 'user_img.jpg'
 
 	img_width_height_columns = load_image(imgname) # loads basic img information
 
@@ -113,6 +153,9 @@ def main():
 
 	y_bounds = scan_image(width, height, columns)
 	segments = get_segments(y_bounds, height, img)
+
+	os.remove(imgname)
+	
 	# segments is a list of all the cropped segments
 
 
