@@ -1,8 +1,10 @@
-import re, csv, urllib, os
+import re, csv, urllib, os, shutil
 import zipfile
 import StringIO
 from PIL import Image, ImageDraw, ImageFont
 import requests
+
+# use glob 
 
 
 def get_font_names(inputfile, myfile):
@@ -30,7 +32,7 @@ def get_font_names(inputfile, myfile):
 
 	print clean_matches
 
-def get_fonts():
+def make_font_urls():
 
 	f = open('fs_sans_serif')
 	font_urls = f.read()
@@ -45,29 +47,54 @@ def get_fonts():
 
 	
 
-def download_zipped_fonts(font_urls):
+def download_zipped_fonts(font_urls, destdir):
 
-	os.chdir('fontsquirrel')	
+	
 
 	for url in font_urls:
 		try:
-		
 			r = requests.get(url)
-			z = zipfile.ZipFile(StringIO.StringIO(r.content))	
-			z.extractall()
-			print r.ok
-	
-		except(zipfile.BadZipfile, zipfile.LargeZipFile), e:
-        	
-        	print "There was a bad file: %s" % (z)
-        	continue 
+			z = zipfile.ZipFile(StringIO.StringIO(r.content))
+			names = z.namelist()	
 
+			ttfs = []
+
+			for name in names:
+				if '.ttf' in name:
+					ttfs.append(name)
+
+			for ttf in ttfs:
+				z.extract(ttf, destdir)
+			
+			print r.ok
+
+		except(zipfile.BadZipfile, zipfile.LargeZipFile), e:	
+        		print "There was a bad file: %s" % (z)
+        		continue 
+
+
+def organize_fonts(srcdir, destdir):
+	"Searches through fonts directory and reorganizes ttf files"
+	if not os.path.exists(destdir):
+		os.mkdir(destdir)
+
+	for dirpath, dirnames, fnames in os.walk(srcdir):
+		for f in fnames:
+			if f.endswith ('.ttf'):
+				pathname = os.path.join(dirpath, f)
+				shutil.copy2(pathname, destdir)
+
+	
+
+	        	
 
 def main():
 
-	fonts = get_font_names('fs_sans_serif_dump.txt', 'fs_sans_serif')	
-	font_urls = get_fonts()
-	download_zipped_fonts(font_urls)
+	# fonts = get_font_names('fs_sans_serif_dump.txt', 'fs_sans_serif')	
+	# font_urls = make_font_urls()
+	# download_zipped_fonts(font_urls, 'fonts')
+	# organize_fonts('fonts', 'font_files')
+	
 
 
 if __name__== "__main__":
