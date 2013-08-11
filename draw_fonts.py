@@ -10,32 +10,67 @@ import SimpleCV as cv
 
 
 
-def make_directories(font_directory):
-	if os.path.exists(font_directory):
-		shutil.rmtree(font_directory)	
+def make_directories(srcdir, destdir): 
+
+	root = "."
+	ttfs = os.listdir(srcdir)
+
+	if '.DS_Store' in ttfs:
+		ttfs.remove('.DS_Store')
+
+	# os.chdir(directory)
+
+	for f in ttfs:
+		fontpath = os.path.join(srcdir, f)
+		full_name = f.split('.')[0:-1]
+		full_name = f.split('-')[0:-1]
+		font_name = "".join(full_name)
+		# font_directory = os.path.join(directory, font_name)
+
+		# if os.path.exists(font_directory):
+		# 	shutil.rmtree(font_directory)
+
+		currentpath = os.getcwd()
+		newpath = os.path.join(currentpath, destdir)
+		
+		font_directory = os.path.join(newpath, font_name)
+
+		if os.path.exists(font_directory):
+			shutil.rmtree(font_directory)
+
+		os.mkdir(font_directory)
 	
-	upper = os.path.join(font_directory, 'upper')
-	lower = os.path.join(font_directory, 'lower')
-	os.mkdir(font_directory)
-	os.mkdir(upper)
-	os.mkdir(lower)
+		upper = os.path.join(font_directory, 'upper')
+		lower = os.path.join(font_directory, 'lower')
+	
+		os.mkdir(upper)
+		os.mkdir(lower)
+
+
+		print "Font directory: ", font_directory
+		print "Fontpath: ", fontpath 
+
+	
+		draw_lower(fontpath, font_directory)
 	# makes uppercase and lowercase directories for font samples 
 
-def draw_lower():
+def draw_lower(fontpath, font_directory):
 
-	fontpath = 'fonts/Arial.ttf'
+
+
+	# fontpath = 'fonts/Arial.ttf'
 	W, H = 100, 100
 	font = ImageFont.truetype(fontpath, 75)
-	font_directory = os.path.join('fonts/Arial', 'lower')
+	# font_directory = os.path.join('fonts/Arial', 'lower')
 
+	lower_directory = os.path.join(font_directory, 'lower')
+	print "This is the lower_directory:", lower_directory
 
-
-	
-
-	os.chdir(font_directory)
+	# os.chdir(lower_directory)
 	
 	for letter in string.ascii_lowercase:
-		letterpath = letter+'.png'
+		letterfile = letter+'.png'
+		letterpath = os.path.join(lower_directory, letterfile)
 		
 		img = Image.new('1', (W,H), 'white')	
 		draw = ImageDraw.Draw(img)
@@ -50,6 +85,7 @@ def draw_lower():
 			# saves new img to font_directory as 'a.png', 'b.png', etc.	
 
 		new_img = img.save(letterpath)
+
 
 
 # Load the image
@@ -97,6 +133,8 @@ def crop_at_bounds(mypath):
 
 
 def main():
+
+	make_directories('testing_font_directories', 'font_letters')
 	# root = 'ocr_alphabet/Arial'
 	# make_directories(root)
 	# ocr_samples = draw_lower()
