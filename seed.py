@@ -38,8 +38,10 @@ def get_image_info(templates_dict):
 
 def load_letters(session, image_info): #image_info is a dictionary
 
+
 	for key in image_info.iterkeys():
 		file_url = key
+		# print "This is the key in image_info.iterkeys()", key
 		font_name = key.split('/')[1]
 		letter_of_alphabet = image_info[key][0]
 		value = ord(letter_of_alphabet)
@@ -96,10 +98,8 @@ def load_user_image(session, img_location, file_url):
 	session.commit()
 
 def load_fonts(session, directory):
-	font_files = os.listdir(directory)
-	if '.DS_Store' in font_files:
-		font_files.remove('.DS_Store')
 
+	font_files = os.listdir(directory)
 	for f in font_files:
 		if f.endswith('.ttf') or f.endswith('.ttc'):
 			name = f.split('.')[0]
@@ -123,7 +123,7 @@ def main(session):
 	# alphabet_dict = get_templates(directory)
 	# alphabet_info = get_image_info(alphabet_dict)	
 	# load_training_letters(session, alphabet_info)
-	letters_dict = get_templates('templates')
+	letters_dict = get_templates('fonts')
 	letter_info = get_image_info(letters_dict)
 	load_letters(session, letter_info)
 
