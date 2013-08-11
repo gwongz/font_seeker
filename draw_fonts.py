@@ -14,6 +14,7 @@ def make_letter_samples(srcdir, destdir):
 		ttfs.remove('.DS_Store')
 
 	for f in ttfs:
+	
 		fontpath = os.path.join(srcdir, f)
 		full_name = f.split('.')[0:-1]
 		if '-' in full_name:
@@ -25,22 +26,27 @@ def make_letter_samples(srcdir, destdir):
 		
 		font_directory = os.path.join(newpath, font_name)
 
-		if os.path.exists(font_directory):
-			shutil.rmtree(font_directory)
-
 		os.mkdir(font_directory)
+		print "Making this directory: ", font_directory
 	
 		upper = os.path.join(font_directory, 'upper')
 		lower = os.path.join(font_directory, 'lower')
 	
+		print "Making upper and lower directories for: ", font_directory
 		os.mkdir(upper)
 		os.mkdir(lower)
 
 		print "Font directory: ", font_directory
 		print "Fontpath: ", fontpath 
 
-		draw_lower(fontpath, font_directory)
-		draw_upper(fontpath, font_directory)
+		try:
+			print "Trying to draw lowercase alphabet to this directory: ", font_directory
+			draw_lower(fontpath, font_directory)
+			draw_upper(fontpath, font_directory)
+
+		except IOError:
+			print "There was a problem with this font: %s" % (fontpath)
+			pass
 
 def draw_lower(fontpath, font_directory):
 
@@ -84,10 +90,13 @@ def draw_upper(fontpath, font_directory):
 		new_img = img.save(letterpath)
 
 
+
+
 def main():
 
 	make_letter_samples(srcdir='ocr_font_files', destdir='ocr_alphabet')
-	# make_letter_samples(srdir='font_files', destdir='font_letters')
+	make_letter_samples(srcdir='font_files', destdir='font_letters')
+
 
 
 
