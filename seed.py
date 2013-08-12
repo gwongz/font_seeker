@@ -1,13 +1,12 @@
-"""Loads fonts from local directory ('templates' and 'training_alphabet') into database"""
- 
 import os 
 import re 
 from SimpleCV import Image
 import model 
 
+"""Loads fonts from 'font_letters' and 'ocr_alphabet' into database"""
 
 
-def get_templates(directory):
+def make_dictionary	(directory):
 
 	templates_dict = {}
 	# looks for .png sample files in fonts directory and appends to dict by letter 
@@ -63,7 +62,7 @@ def load_letters(session, image_info): #image_info is a dictionary
 		# 	upper = True 
 
 
-def load_training_letters(session, image_info):
+def load_ocr_letters(session, image_info):
 
 	for key in image_info.iterkeys():
 		file_url = key
@@ -73,13 +72,13 @@ def load_training_letters(session, image_info):
 		height = image_info[key][2]
 		aspect_ratio = round(float(width)/float(height), 4)
 
-		training_letter = model.Training_Letter(value = value,
+		ocr_letter = model.OCR_Letter(value = value,
 								file_url = file_url,
 								width = width,
 								height = height,
 								aspect_ratio = aspect_ratio)
 
-		session.add(training_letter)
+		session.add(ocr_letter)
 	session.commit()
 
 # this gets run in match_letter.py  
@@ -102,8 +101,8 @@ def load_fonts(session, directory):
 	font_files = os.listdir(directory)
 	for f in font_files:
 		if f.endswith('.ttf') or f.endswith('.ttc'):
-			name = f.split('.')[0]
-		
+			fullname = f.split('.')[0]
+			name = re.sub('-webfont', '', fullname)
 			font = model.Font(name = name)
 
 			session.add(font)
@@ -116,18 +115,26 @@ def clear_user(session):
 		session.delete(imgfile)
 		session.commit()
 
+# def clear_tables(session):
+
+	# letters = model.session.query(model.Letter).all().delete()
+	# ocr_letters = model.session.query(model.OCR_Letter).all().delete()
+	# fonts = model.session.query(model.Font).all().delete()
+	# session.commit()
+
+	
 
 def main(session):
-	# directory = 'training_alphabet' or directory = 'templates'
-	# directory = 'training_alphabet'
-	# alphabet_dict = get_templates(directory)
-	# alphabet_info = get_image_info(alphabet_dict)	
-	# load_training_letters(session, alphabet_info)
-	letters_dict = get_templates('fonts')
-	letter_info = get_image_info(letters_dict)
-	load_letters(session, letter_info)
+	ocr_alphabet = make_dictionary(directory='ocr_alphabet')
+	fonts = make_dictionary(directory='font_letters')
 
-	# load_fonts(session, 'templates')
+	ocr_info = get_image_info(ocr_alphabet)
+	font_info = get_image_info(fonts)
+
+	# clear_tables(session)
+	load_ocr_letters(session, ocr_info)
+	load_letters(session, font_info)
+	load_fonts(session, directory='font_files')
 
 
 if __name__ == "__main__":
