@@ -1,6 +1,6 @@
 import os 
 import re 
-from SimpleCV import Image
+from PIL import Image
 import model 
 
 """Loads fonts from 'font_letters' and 'ocr_alphabet' into database"""
@@ -24,11 +24,21 @@ def get_image_info(templates_dict):
 	# updates dictionary with more info for loading to db
 
 	for key in templates_dict.iterkeys():
-		img = Image(key)
-		width = img.width
-		height = img.height
+		img = Image.open(key)
+		img = img.convert('1') # converts to black and white
+
+		width = img.size[0]
+		height = img.size[1]
+		pixels = img.load()
+		all_pixels = []
+		for x in range(width):	
+			for y in range(height):
+				cpixel = pixels[x,y]
+				all_pixels.append(cpixel)
+		black_pixels = all_pixels.count(0)
+		
 		current_value = templates_dict[key]
-		new_array = [current_value, width, height]	
+		new_array = [current_value, black_pixels]	
 		# resets value of keys in dict so they return letter, width, height 
 		templates_dict[key] = new_array
 
@@ -44,16 +54,14 @@ def load_letters(session, image_info): #image_info is a dictionary
 		font_name = key.split('/')[1]
 		letter_of_alphabet = image_info[key][0]
 		value = ord(letter_of_alphabet)
-		width = image_info[key][1]
-		height = image_info[key][2]
-		aspect_ratio = round(float(width)/float(height), 4)
+		black_pixels = image_info[key][1]
+		
+		# aspect_ratio = round(float(width)/float(height), 4)
 
 		letter = model.Letter(value = value,
 								file_url = file_url,
 								font_name = font_name,
-								width = width,
-								height = height,
-								aspect_ratio = aspect_ratio)
+								black_pixels = black_pixels)
 
 		session.add(letter)
 	session.commit()
@@ -68,30 +76,39 @@ def load_ocr_letters(session, image_info):
 		file_url = key
 		letter_of_alphabet = image_info[key][0]
 		value = ord(letter_of_alphabet)
-		width = image_info[key][1]
-		height = image_info[key][2]
-		aspect_ratio = round(float(width)/float(height), 4)
+		black_pixels = image_info[key][1]
+		# height = image_info[key][2]
+		# aspect_ratio = round(float(width)/float(height), 4)
 
 		ocr_letter = model.OCR_Letter(value = value,
 								file_url = file_url,
-								width = width,
-								height = height,
-								aspect_ratio = aspect_ratio)
+								black_pixels = black_pixels)
 
 		session.add(ocr_letter)
 	session.commit()
 
 # this gets run in match_letter.py  
 def load_user_image(session, img_location, file_url):
-	img = Image(img_location)
-	width = img.width
-	height = img.height
-	aspect_ratio = round(float(width)/float(height), 4)
+	img = Image.open(img_location)
+	# width = img.width
+	# height = img.height
+	img = img.convert('1') # converts to black and white
+
+	width = img.size[0]
+	height = img.size[1]
+	pixels = img.load()
+	all_pixels = []
+	for x in range(width):	
+		for y in range(height):
+			cpixel = pixels[x,y]
+			all_pixels.append(cpixel)
+	black_pixels = all_pixels.count(0)
+	
+
+	# aspect_ratio = round(float(width)/float(height), 4)
 
 	user_image = model.User_Image(file_url = file_url,
-								width = width,
-								height = height,
-								aspect_ratio = aspect_ratio)
+								black_pixels = black_pixels)
 
 	session.add(user_image)
 	session.commit()
@@ -125,16 +142,16 @@ def clear_user(session):
 	
 
 def main(session):
-	ocr_alphabet = make_dictionary(directory='ocr_alphabet')
+	# ocr_alphabet = make_dictionary(directory='ocr_alphabet')
+	# ocr_info = get_image_info(ocr_alphabet)
+	# load_ocr_letters(session, ocr_info)
+
 	fonts = make_dictionary(directory='font_letters')
-
-	ocr_info = get_image_info(ocr_alphabet)
 	font_info = get_image_info(fonts)
-
-	# clear_tables(session)
-	load_ocr_letters(session, ocr_info)
 	load_letters(session, font_info)
-	load_fonts(session, directory='font_files')
+	
+
+	# load_fonts(session, directory='font_files')
 
 
 if __name__ == "__main__":

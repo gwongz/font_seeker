@@ -27,9 +27,9 @@ class OCR_Letter(Base):
 	id = Column(Integer, primary_key = True, autoincrement = True)
 	value = Column(Integer)
 	file_url = Column(String(150))
-	width = Column(Integer)
-	height = Column(Integer)
-	aspect_ratio = Column(Float) 
+	black_pixels = Column(Integer)
+
+	
 
 class Letter(Base):
 	__tablename__ = 'letters'
@@ -37,9 +37,7 @@ class Letter(Base):
 	id = Column(Integer, primary_key = True, autoincrement = True)
 	value = Column(Integer)
 	file_url = Column(String(150))
-	width = Column(Integer)
-	height = Column(Integer)
-	aspect_ratio = Column(Float)
+	black_pixels = Column(Integer)
 	font_name = Column(String(100))
 
 	font_id = Column(Integer, ForeignKey('fonts.id'))
@@ -53,13 +51,12 @@ class User_Image(Base):
 
 	id = Column(Integer, primary_key = True, autoincrement = True)
 	file_url = Column(String(150))
-	width = Column(Integer)
-	height = Column(Integer)
-	aspect_ratio = Column(Float)
-	training_letter_aspect_ratio = Column(Float, ForeignKey('ocr_letters.aspect_ratio'))
-	letter_aspect_ratio = Column(Float, ForeignKey('letters.aspect_ratio'))
 
-	training_letter = relationship('OCR_Letter', backref=backref('ocr_letters', order_by=id))
+	black_pixels = Column(Integer)
+	ocr_letter_black_pixels = Column(Float, ForeignKey('ocr_letters.black_pixels'))
+	letter_black_pixels = Column(Float, ForeignKey('letters.black_pixels'))
+
+	ocr_letter = relationship('OCR_Letter', backref=backref('ocr_letters', order_by=id))
 	letter = relationship('Letter', backref = backref('letters', order_by=id))
 
 
