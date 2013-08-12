@@ -22,8 +22,8 @@ class Font(Base):
 	family = Column(String(100))
 
 
-class Training_Letter(Base):
-	__tablename__ = 'training_letters'
+class OCR_Letter(Base):
+	__tablename__ = 'ocr_letters'
 	id = Column(Integer, primary_key = True, autoincrement = True)
 	value = Column(Integer)
 	file_url = Column(String(150))
@@ -43,9 +43,6 @@ class Letter(Base):
 	font_name = Column(String(100))
 
 	font_id = Column(Integer, ForeignKey('fonts.id'))
-	
-	
-	# not sure how this works 
 	font = relationship('Font', backref=backref('fonts', order_by=id))
 
 
@@ -59,14 +56,11 @@ class User_Image(Base):
 	width = Column(Integer)
 	height = Column(Integer)
 	aspect_ratio = Column(Float)
-	training_letter_aspect_ratio = Column(Float, ForeignKey('training_letters.aspect_ratio'))
+	training_letter_aspect_ratio = Column(Float, ForeignKey('ocr_letters.aspect_ratio'))
 	letter_aspect_ratio = Column(Float, ForeignKey('letters.aspect_ratio'))
 
-	training_letter = relationship('Training_Letter', backref=backref('training_letters', order_by=id))
+	training_letter = relationship('OCR_Letter', backref=backref('ocr_letters', order_by=id))
 	letter = relationship('Letter', backref = backref('letters', order_by=id))
-
-	
-
 
 
 def main():
