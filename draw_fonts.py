@@ -1,4 +1,5 @@
 import os
+import re 
 import string
 import shutil
 from PIL import Image, ImageOps, ImageFont, ImageDraw, ImageChops
@@ -8,6 +9,12 @@ from PIL import Image, ImageOps, ImageFont, ImageDraw, ImageChops
 
 def make_letter_samples(srcdir, destdir): 
 
+	# clear out old directory files 
+	if os.path.exists(destdir):
+		shutil.rmtree(destdir)
+
+	os.mkdir(destdir)
+
 	ttfs = os.listdir(srcdir)
 
 	if '.DS_Store' in ttfs:
@@ -16,10 +23,13 @@ def make_letter_samples(srcdir, destdir):
 	for f in ttfs:
 	
 		fontpath = os.path.join(srcdir, f)
-		full_name = f.split('.')[0:-1]
-		if '-' in full_name:
-			full_name = f.split('-')[0:-1]
-		font_name = "".join(full_name)
+		fullname = f.split('.')[0]
+		font_name = re.sub('-webfont', '', fullname)
+
+		# full_name = f.split('.')[0:-1]
+		# if '-' in full_name:
+			# full_name = f.split('-')[0:-1]
+		# font_name = "".join(full_name)
 
 		currentpath = os.getcwd()
 		newpath = os.path.join(currentpath, destdir)
@@ -94,7 +104,7 @@ def draw_upper(fontpath, font_directory):
 
 def main():
 
-	make_letter_samples(srcdir='ocr_font_files', destdir='ocr_alphabet')
+	# make_letter_samples(srcdir='ocr_font_files', destdir='ocr_alphabet')
 	make_letter_samples(srcdir='font_files', destdir='font_letters')
 
 
