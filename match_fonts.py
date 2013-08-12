@@ -6,61 +6,36 @@ from sys import argv
 from PIL import Image, ImageOps
 import SimpleCV as cv
 
-import model 
+import model, process_images
 from seed import load_user_image, clear_user
+from process_images import crop_at_bounds, make_constrained
 
 
 
 """Identifies letter of alphabet for each segment stored in 'user' directory and then matches to font"""
 
-def add_user_image(directory):
+def process_user_image(directory):
 
-	# clear db before storing what's been added to user directory	
-	session = model.session
-	clear_user(session)
+	
+	crop_at_bounds(directory)
+	make_constrained(directory)
 
 	segments = os.listdir(directory)
-
 	if '.DS_Store' in segments:
 		segments.remove('.DS_Store')
 
+	session = model.session
+	clear_user(session)
+	
 	for imgfile in segments:
 		location = os.path.abspath(os.path.join(directory, imgfile))
 		file_url = os.path.join(directory, imgfile)
 		name = str(file_url)
-		print location 
-		img = cv.Image(location)
-		blobs = img.binarize().findBlobs()
-
-		if blobs != None:
-			bounds = blobs[-1].boundingBox()
-			crop = img.crop(bounds).save(name)
-			load_user_image(session, location, file_url) # location is abs path, file_url is relative path, fcn in seed.py 
-
-		if blobs == None:
-			os.remove(file_url)
-			# removes if it isn't possible to crop to bounds 
-
-		
-def constrained (mypath):
-
+		load_user_image(session, location, file_url)
 	
-	files = os.listdir(mypath)
-	if '.DS_Store' in files:
-		files.remove('.DS_Store')
-
-	for f in files:
-		location = os.path.abspath(os.path.join(mypath, f))
-		file_url = os.path.join(mypath, f)
-		name = str(file_url)
-
-		img = cv.Image(location).invert()
-		adaptimg = img.adaptiveScale((20, 20), cv.Color.WHITE)
-		adaptimg.save(name)
 
 def get_letter(user_dir, ocr_dir):
-	font_table = {}
-	ocr_dict = {}
+	
 	segments = os.listdir(user_dir)
 	if '.DS_Store' in segments:
 		segments.remove('.DS_Store')
@@ -72,69 +47,64 @@ def get_letter(user_dir, ocr_dir):
 	       		if f.endswith('.png'):
 	       			ocr_alphabet.append(f)
 
-	# print "These are the user segments. They should be in alphanumeric order: ", segments
-	# print "These are the templates. They should be in alphabetic order: ", templates
+	return segments, ocr_alphabet # lists in alphanumeric order 
 
+
+
+def find_match(user_dir, ocr_dir, segments, ocr_alphabet):
+	"""Runs faster but no good real methodology for accuracy"""
+
+	font_table = {}
+	
+	print "These are the segments:", segments
+	print "This is the order of the ocr_alphabet: ", ocr_alphabet
 
 	for imgfile in segments:
 
 		img_url = os.path.abspath(os.path.join(user_dir, imgfile))	
 		user_img = Image.open(img_url).convert('1') # using PIL 
-		# deterine whether to check upper or lower[?]
-
+	
 		count = 0 
 		for letter in ocr_alphabet:
-			print "Count at the top of the loop", count 
+			print "Count at the top of the OCR alphabet loop", count 
 
-			if count > 26:
+			if count >= 26:
 				letter_url = os.path.abspath(os.path.join(ocr_dir+'/upper', letter))
 
 			else:
 				letter_url = os.path.abspath(os.path.join(ocr_dir+'/lower', letter))
 			
-			print "OCR template url: ", letter_url
-			print "OCR template letter", letter 
-
 			letter = Image.open(letter_url).convert('1')
-			# print "This is the template size: ", letter.size
-
-
 			diff = difference_of_images(user_img, letter)
 
-			print "This is the difference:", diff
-			print "User_img", img_url
-			print "Template letter:", letter_url
-
-			# if img_url not in ocr_dict.keys():
-			# 	ocr_dict.setdefault(img_url, [diff])
-
-			# else:
-			# 	ocr_dict[img_url].append(diff)
-
-
+			print "This is the difference %s between %s and %s" % (diff, img_url, letter_url)
+	
+			# initializes value for db lookup 		
+			if count < 26:
+				value = count + 97
 		
+			if count  >= 26:
+				value = count + 39
 
-			value = count + 97
-		
 
-			if diff < 0.03:
+
+			if diff <= 0.005:
+				print "The difference was low enough to check the font"
+				print "The letter value %d is being looked up for %s" % (value, img_url)
+
 				font_objects = model.session.query(model.Letter.file_url).filter(model.Letter.value == value).all()
-				# for font in font_objecs:
-				# 	print font 	
-					# font = Image.open(file_location)
-				print "This would be a pass"
-				# font_urls = []
-				# print "This is the length of font objects", len(font_objects)
 
 				for i in range (len(font_objects)):
 					font_location = str(font_objects[i][0])
-
 					font_img = Image.open(font_location).convert('1')
-
 					font_diff = difference_of_images(user_img, font_img)
 
-					if font_diff < 0.05:
-						font_name = model.session.query(model.Letter.font_name).filter(model.Letter.file_url==font_location).one()
+					if font_diff < 0.03:
+
+						print "The difference was low enough to append to the dictionary"
+						print "This font location %s is a match for segment %s" % (font_location, img_url)
+						
+						font_name = model.session.query(model.Letter.font_name).filter(model.Letter.file_url==font_location).first()
 
 						if font_name not in font_table.keys():
 							font_table.setdefault(font_name, 0)
@@ -142,47 +112,26 @@ def get_letter(user_dir, ocr_dir):
 							font_table[font_name] += 1 
 
 
-
-			print "This is font table before incrementing the count", font_table.items()
-
 			if len(font_table) > 2:
 				most_matches = max(font_table.iteritems(), key=lambda (k,v): v)
 
-
 				if most_matches[1] >=10:
-					font = most_matches[0]
-					print "This is your best match:", font 
+					print "This is most matches when it's exceeded 10:", most_matches
+					font = str(most_matches[0])
+					
+					break 
 
-		
-
-
-			# most_matches = max(font_table.iteritems(), key=lambda (k,v): len(v))
-			# if most_matches > 3:
-			# 	print "Most matches HAS REACHED MORE THAN THREE"
-			# 	break
-
-
-			print "Count before iterating", count
 			count +=1
-			print "Count at the bottom", count
+
+			print "This is the length of the font table at the end of the font loop: ", len(font_table) 
+			print "Count at the bottom of the ocr alphabet loop", count
 	
-	print font_table.items()
-	# print ocr_dict.items()	
-
-
-
-
-
-def resize_to_smaller(img, new_width, new_height): # passed in as PIL imgs
-
-	resized_img = ImageOps.fit(img, (new_width, new_height), Image.ANTIALIAS, 0, (0.5, 0.5))
-	return resized_img # resized down to new width
+	print most_matches
+	
 
 
 # only works when images are identically sized 
 def difference_of_images(user_img, template_img): # passed in as PIL imgs
-
-
 
 	# loads pixel values into array 
 	pixel_user = np.asarray(user_img).flatten()
@@ -192,29 +141,16 @@ def difference_of_images(user_img, template_img): # passed in as PIL imgs
 	difference = [i^j for i,j in zip(pixel_user, pixel_template)]	
 	difference2 = [i^j for i,j in zip(pixel_template, pixel_user)]
 
-	# print "This is difference", difference
-	# print "This is difference2", difference2
-
-	# however many times 1 (True) appears in the list
+	# number of times 1 (True) appears in the list --> pixels are exclusively different
 	diff= difference.count(1)
-	# print "This is diff of 0: ", diff
-
+	# print "This is the amount of difference: ", diff
 	diff2 = difference.count(1)
-	# print "This is diff of black2", diff2
-
-	differenceTrue = difference.count(True)
-	
-	# print "Difference True", differenceTrue
-	
 
 
 	total_diff = float(diff) + float(diff2)
 	percent_of_diff = total_diff/float(len(pixel_user)+len(pixel_template))
 
-	# print "Percentage of difference between the two images:", percent_of_diff*100
-
-
-	# print "Percentage of True/False: ", differenceTrue/float(len(pixel_user))
+	print "Percentage of difference between the two images:", percent_of_diff*100
 	return round(percent_of_diff, 4)
 	# 1 means complete difference; 0 means complete same
 
@@ -345,26 +281,19 @@ def sorted_nicely(list):
 
 def main():
 
-	user_dir = 'user_image'  
-	add_user_image(user_dir) # commits user images to database, run 
-	# ocr_dir = 'training_alphabet/Arial'
-	constrained(user_dir)
+
+	# process_user_image(directory='user_image') # commits user image to database
+
+	base_data = get_letter(user_dir='user_image', ocr_dir='ocr_alphabet')
+	segments = base_data[0]
+	ocr_alphabet = base_data[1]
 
 
 
-	ocr_data = get_letter(user_dir, 'ocr_alphabet/Arial')
-	# # returns dictionary that has as values: list of ALL xor matches per segment for lowercase
+	find_match(user_dir='user_image', ocr_dir='ocr_alphabet/Arial', segments=segments, ocr_alphabet=ocr_alphabet)
 
-	# ocr_match_dict = identify_letter(ocr_data)
-	# # returns dictionary that has as values: list of smallest xor difference 
-	# # value, idx position in img_data list, letter_of_alphabet (idx + 97 or idx + 65) 
 
-	
-	# letters_to_process = get_letters_to_process(user_dir, ocr_match_dict)
-	# # # runs ocr on user_image segments using dictionary created from find_letter_match 
-	# # # returns a sorted list of dictionaries [{segment: letter}]
 
-	# font_table = match_font(letters_to_process)
 	
 	# result = rank_fonts(font_table)
 
