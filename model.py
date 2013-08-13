@@ -30,6 +30,8 @@ class OCR_Letter(Base):
 	black_pixels = Column(Integer)
 	width = Column(Integer)
 	height = Column(Integer)
+	aspect_ratio = Column(Integer)
+	blob_area = Column(Integer)
 
 	
 
@@ -43,6 +45,8 @@ class Letter(Base):
 	font_name = Column(String(100))
 	width = Column(Integer)
 	height = Column(Integer)
+	aspect_ratio = Column(Integer)
+	blob_area = Column(Integer)
 
 	font_id = Column(Integer, ForeignKey('fonts.id'))
 	font = relationship('Font', backref=backref('fonts', order_by=id))
@@ -59,9 +63,11 @@ class User_Image(Base):
 	height = Column(Integer)
 
 	black_pixels = Column(Integer)
+	aspect_ratio = Column(Integer)
+	blob_area = Column(Integer)
 
-	ocr_letter_black_pixels = Column(Float, ForeignKey('ocr_letters.black_pixels'))
-	letter_black_pixels = Column(Float, ForeignKey('letters.black_pixels'))
+	ocr_letter_black_pixels = Column(Integer, ForeignKey('ocr_letters.black_pixels'))
+	letter_black_pixels = Column(Integer, ForeignKey('letters.black_pixels'))
 
 	ocr_letter = relationship('OCR_Letter', backref=backref('ocr_letters', order_by=id))
 	letter = relationship('Letter', backref = backref('letters', order_by=id))
