@@ -1,6 +1,6 @@
 import os
 import re
-import numpy as np 
+from collections import OrderedDict
 from PIL import Image, ImageOps
 import SimpleCV as cv
 
@@ -83,7 +83,11 @@ def get_letter(user_dir, ocr_dir):
 
 
 			count +=1
-		# only continue if there is a bad match result?
+
+		if len(ocr_dict.keys()) > len(segments)/2:
+			break
+		# only check half of the segments in the first pass
+
 	return ocr_dict # a dictionary with imgname as key and 52 percentages 
 
 # only works when images are identically sized 
@@ -137,42 +141,24 @@ def identify_letter(ocr_data):
 
 def get_letters_to_process(user_dir, ocr_match_dict):
 
-	segments = os.listdir(user_dir)
-	if '.DS_Store' in segments:
-		segments.remove('.DS_Store')
-
-	segments = sorted_nicely(segments)
-	letters_to_process = []
-
-	# output = ""
-	for imgfile in segments:
-
-		letter_tuple = []
-		img_url = os.path.abspath(os.path.join(user_dir, imgfile))	
-		letter = ocr_match_dict[img_url][2]
-
-		letter_tuple.append(img_url)
-		letter_tuple.append(letter)
-
-
-		letters_to_process.append(letter_tuple)
-
-		# letters_to_process.append(img_url)
-		# letters_to_process.append(letter)
-		# output += letter
-
-	# print "It looks like your image says: %s" % (output) 
-	return letters_to_process
-
-
-def match_font(process_letter_list):
-
 	letters = []
 	user_urls = []
 
-	for item in process_letter_list:
-		user_urls.append(item[0])
-		letters.append(item[1])
+	for key, value in ocr_match_dict.iteritems():
+		user_urls.append(key)
+		letters.append(ord(value[2]))
+
+	# for key, value in sorted(items.iteritems(), key=lambda (k,v): (v,k)):
+	# 	print "%s: %s" % (key, value)
+
+
+	print "These are the letter values", letters
+	print "These are the user urls: ", user_urls
+	# print "It looks like your image says: %s" % (output) 
+	return letters, user_urls
+
+
+def match_font(letters, user_urls):
 
 	font_table = {}
 	n=0
@@ -185,21 +171,29 @@ def match_font(process_letter_list):
 		relative_url = os.path.join(relative[0], relative[1])
 		print "This is relative_url", relative_url
 
-		letter = letters[n] # gets you one letter
-		value = ord(letter)
+		value = int(letters[n])
+		print "This is the value to be looked up", value
+		# letter = letters[n] # gets you one letter
+		# value = ord(letter)
 
-
+		# print "This is the letter to be looked up"
 
 		user_black_pixels_tuple = model.session.query(model.User_Image.black_pixels).filter(model.User_Image.file_url==relative_url)
 		
-		print "This is userblack pixels tuple", user_black_pixels_tuple 
+		# print "This is userblack pixels tuple", user_black_pixels_tuple 
 		user_black_pixels = user_black_pixels_tuple[0][0]
 		print "This is the number of black pixels in user image:", user_black_pixels
 
-		fonts = model.session.query(model.Letter.file_url).filter(model.Letter.value == value).all()
+		font_objects = model.session.query(model.Letter.file_url).filter(model.Letter.value == value).all()
+		# print "This is the result of the fonts query", font_objects
 
-		for i in range (len(fonts)):
-			font_location = str(fonts[i][0])
+		# print "This is the length of font_objects", len(font_objects)
+
+		for i in range (len(font_objects)):
+			print "This is i at the top", i
+
+			font_location = str(font_objects[i][0])
+			print "This is the font location", font_location
 			
 			font_black_pixels_tuple = model.session.query(model.Letter.black_pixels).filter(model.Letter.file_url == font_location)
 			font_black_pixels = font_black_pixels_tuple[0][0]
@@ -209,8 +203,13 @@ def match_font(process_letter_list):
 
 			if font_black_pixels > black_pixels_min and font_black_pixels < black_pixels_max:
 			# only xor if value of black pixels within range 
+				print "The black pixels condition was met"
 				font_img = font_location
 				font_xor = difference_of_images(user_img, font_img)
+				print "This is the font xor", font_xor
+				print "This is the user img being compared", user_img
+				print "This is the font img being compared", font_img
+				print "This is the letter being checked", chr(value)
 
 				if font_xor <= 0.05:
 					font_name = model.session.query(model.Letter.font_name).filter(model.Letter.file_url==font_location).one()
@@ -226,6 +225,8 @@ def match_font(process_letter_list):
 
 		n+=1
 		# print 'This is n at the bottom: ', n 
+
+	print "This is the font table", font_table.items()
 	return font_table
 
 
@@ -271,16 +272,30 @@ def main():
 	
 	letters_to_process = get_letters_to_process(user_dir, ocr_match_dict)
 	# can cut run time by only appending good matches to letter to process list
-	print letters_to_process
+	letters = letters_to_process [0]
+	user_urls = letters_to_process[1]
 
 
-	font_table = match_font(letters_to_process)
-	print font_table.items()
-	
-	result = rank_fonts(font_table)
-	print result 
+	font_table = match_font(letters, user_urls)
+	# print font_table.items()
+
+	# font table sorted by length of values list 
+	ordered_table = OrderedDict(sorted(font_table.items(), key=lambda t: len(t[1])))
+	items = ordered_table.items()
+	print "This is the font table sorted by value \n\n\n\n", items 
+
+
+	items.reverse()
+	print "These are the items in reverse order: ", OrderedDict(items)
+
+	# print OrderedDict(items).pop()
+	# print OrderedDict(items).pop()
+	# result = rank_fonts(font_table)
+	# print result 
 
 	# return result 
+
+
 
 
 
