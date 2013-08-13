@@ -28,6 +28,8 @@ class OCR_Letter(Base):
 	value = Column(Integer)
 	file_url = Column(String(150))
 	black_pixels = Column(Integer)
+	width = Column(Integer)
+	height = Column(Integer)
 
 	
 
@@ -39,6 +41,8 @@ class Letter(Base):
 	file_url = Column(String(150))
 	black_pixels = Column(Integer)
 	font_name = Column(String(100))
+	width = Column(Integer)
+	height = Column(Integer)
 
 	font_id = Column(Integer, ForeignKey('fonts.id'))
 	font = relationship('Font', backref=backref('fonts', order_by=id))
@@ -51,8 +55,11 @@ class User_Image(Base):
 
 	id = Column(Integer, primary_key = True, autoincrement = True)
 	file_url = Column(String(150))
+	width = Column(Integer)
+	height = Column(Integer)
 
 	black_pixels = Column(Integer)
+
 	ocr_letter_black_pixels = Column(Float, ForeignKey('ocr_letters.black_pixels'))
 	letter_black_pixels = Column(Float, ForeignKey('letters.black_pixels'))
 

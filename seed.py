@@ -38,7 +38,7 @@ def get_image_info(templates_dict):
 		black_pixels = all_pixels.count(0)
 		
 		current_value = templates_dict[key]
-		new_array = [current_value, black_pixels]	
+		new_array = [current_value, black_pixels, width, height]	
 		# resets value of keys in dict so they return letter, width, height 
 		templates_dict[key] = new_array
 
@@ -55,13 +55,17 @@ def load_letters(session, image_info): #image_info is a dictionary
 		letter_of_alphabet = image_info[key][0]
 		value = ord(letter_of_alphabet)
 		black_pixels = image_info[key][1]
+		width = image_info[key][2]
+		height = image_info[key][3]
 		
 		# aspect_ratio = round(float(width)/float(height), 4)
 
 		letter = model.Letter(value = value,
 								file_url = file_url,
 								font_name = font_name,
-								black_pixels = black_pixels)
+								black_pixels = black_pixels,
+								width = width,
+								height = height)
 
 		session.add(letter)
 	session.commit()
@@ -77,12 +81,16 @@ def load_ocr_letters(session, image_info):
 		letter_of_alphabet = image_info[key][0]
 		value = ord(letter_of_alphabet)
 		black_pixels = image_info[key][1]
+		width = image_info[key][2]
+		height = image_info[key][3]
 		# height = image_info[key][2]
 		# aspect_ratio = round(float(width)/float(height), 4)
 
 		ocr_letter = model.OCR_Letter(value = value,
 								file_url = file_url,
-								black_pixels = black_pixels)
+								black_pixels = black_pixels,
+								width = width,
+								height=height)
 
 		session.add(ocr_letter)
 	session.commit()
@@ -108,7 +116,9 @@ def load_user_image(session, img_location, file_url):
 	# aspect_ratio = round(float(width)/float(height), 4)
 
 	user_image = model.User_Image(file_url = file_url,
-								black_pixels = black_pixels)
+								black_pixels = black_pixels,
+								width = width,
+								height = height)
 
 	session.add(user_image)
 	session.commit()
@@ -117,7 +127,7 @@ def load_fonts(session, directory):
 
 	font_files = os.listdir(directory)
 	for f in font_files:
-		if f.endswith('.ttf') or f.endswith('.ttc'):
+		if f.endswith('.ttf') or f.endswith('.ttc') or f.endswith('dfont'):
 			fullname = f.split('.')[0]
 			name = re.sub('-webfont', '', fullname)
 			font = model.Font(name = name)
