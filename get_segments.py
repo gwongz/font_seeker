@@ -2,27 +2,41 @@ import os, urllib
 from shutil import rmtree 
 from sys import argv
 from PIL import Image
+import SimpleCV as cv
+import requests 
 
 import model 
 
 """Segments image into individual characters and saves to user_image directory"""
 
+
 def load_image(imgname):
-	img = Image.open(imgname)
-	if img.mode != '1':
-		img = img.convert('1')
+	img = cv.Image(imgname)
+	binarized = img.binarize()
+	inverted = binarized.invert().save('inverted.png')
 
-	width = img.size[0]
-	height = img.size[1]
-
-	pixels = img.load()
+	newimg = Image.open('inverted.png').convert('1')
+	pixels = newimg.load()
+	width = newimg.size[0]
+	height = newimg.size[1]
 	columns = []
 	for y in range(width):
 		columns.append([pixels[y,x] for x in range(height)])
 		# column returns color at coordinate (y,x) - read as 
 		# row[4] column[0]
+	os.remove('inverted.png')
 
-	return width, height, columns, img
+	# img = Image.open(imgname).convert('1')
+	# pixels = img.load()
+	# width = img.size[0]
+	# height = img.size[1]
+	# columns = []
+	# for y in range(width):
+	# 	columns.append([pixels[y,x] for x in range(height)])
+		# column returns color at coordinate (y,x) - read as 
+		# row[4] column[0]
+
+	return width, height, columns, newimg
 
 
 def first_black(width, height, columns, current_col):
@@ -137,15 +151,12 @@ def get_segments(slices, height, img):
 
 	return segments # returns list of all the cropped and segmented imgs
 
-def main(imgname):
-	# script, input_file = argv
-	# imgname = input_file
+def main(img_url):
 
-	urllib.urlretrieve(imgname, 'user_img.jpg')
-	imgname = 'user_img.jpg'
+	r = urllib.urlretrieve(img_url, 'temp_user_img.png')
+	imgname = 'temp_user_img.png'
 
 	img_width_height_columns = load_image(imgname) # loads basic img information
-
 	width = img_width_height_columns[0]
 	height = img_width_height_columns[1]
 	columns = img_width_height_columns[2]
@@ -154,8 +165,17 @@ def main(imgname):
 	y_bounds = scan_image(width, height, columns)
 	segments = get_segments(y_bounds, height, img)
 
-	os.remove(imgname)
+	if len(segments) <= 1 or None:
+		message = "Oh, snap. I can't segment your image. Want to try another image where the text is more spaced out?"
+
+
+	else:
+		message = "Your image has been segmented. Now let's process it."
 	
+	
+	os.remove(imgname)
+	return message
+
 	# segments is a list of all the cropped segments
 
 
