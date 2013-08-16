@@ -54,7 +54,7 @@ def get_letter(user_dir, ocr_dir):
 	for imgfile in segments:
 
 		user_url = os.path.abspath(os.path.join(user_dir, imgfile))	
-		# user_img = img_url # 
+		user_img = user_url # 
 		# relative = user_img.split('/')[-2:]
 		# relative_url = os.path.join(relative[0], relative[1])
 		
@@ -75,11 +75,11 @@ def get_letter(user_dir, ocr_dir):
 			xor_of_images = difference_of_images(user_url, letter_url)
 			print "This is xor_of_images", xor_of_images
 
-			if img_url not in ocr_dict.keys():
-				ocr_dict.setdefault(img_url, [xor_of_images])
+			if user_url not in ocr_dict.keys():
+				ocr_dict.setdefault(user_url, [xor_of_images])
 			
 			else:
-				ocr_dict[img_url].append(xor_of_images)				
+				ocr_dict[user_url].append(xor_of_images)				
 				
 			count +=1
 		
@@ -264,19 +264,23 @@ def rank_fonts(font_table, best_ocr_matches):
 	print "Making some decisions now:"
 
 	if len(font_table.items()) == 1:
-		print "Match found! This is the closest match found: ", str(font_table.keys())
+		msg = "Match found! This is the closest match found: "
+		return msg, str(font_table.keys())
 
 	if len(font_table.items()) > 1 and len(font_table.items()) < 4:
 		# return top match 
-		print "Match found! This is the closest match found: ", averageitems[0][0]
+		msg = "Match found! This is the closest match found: "
+		return msg, averageitems[0][0]
 
 	if len(font_table.items()) >= 4:
 		# if there are several matches	
-		print "Match found: This is the closest match found: ", averageitems[0][0]
+		msg = "Match found: This is the closest match found: "
+		return msg, averageitems[0][0]
 		
 		averageitems.pop(0)
 		while averageitems [0][1] <= .05:
-			print "These were also close matches: ", averageitems[0][0]
+			msg = "These were also close matches: "
+			return msg, averageitems[0][0]
 
 
 
@@ -289,7 +293,7 @@ def sorted_nicely(list):
 
 def main():
 	# commits user images to database
-	# process_user_image('user_image')  
+	process_user_image('user_image')  
 	user_dir = 'user_image'
 	ocr_dir = 'ocr_alphabet/Arial'
 
@@ -313,8 +317,8 @@ def main():
 
 	font_table = match_font(letters, user_urls)
 	result = rank_fonts(font_table, best_ocr_matches)
-	print result 
-	# return result 
+	
+	return result 
 
 if __name__ == "__main__":
 	main()
