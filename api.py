@@ -1,9 +1,20 @@
-import os, json, urllib
-from flask import Flask, jsonify, request, url_for, redirect
+import os
+import json
+import urllib
+
+from flask import Flask, jsonify, request, url_for, redirect, render_template
 from werkzeug import secure_filename
+
 import model
-import match_letter
+import ranked_match
 import get_segments
+
+
+
+# UPLOAD_FOLDER = '/user_images'
+# # where uploaded files will be stored
+# ALLOWED_EXTENSIONS = set(['jpg', 'jpeg', 'png', 'gif'])
+# app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 app = Flask(__name__)
@@ -19,16 +30,18 @@ def get_all_fonts():
 def send_image():
 
 	try:
-		imgname = request.args.get('img')
-		# has to be passed in without 
-		segments = get_segments.main(imgname)
+		img_url = request.args.get('img')
+		# have to escape slashes  
+		segments = get_segments.main(img_url)
 		result = json.dumps(segments)
-		return result 
+		
 
 	except IOError:
-		message = "I can't find that image. Did you remember to encode your url?"
+		message = "Oh, snap. I can't find that image. Can you try a different image?"
 		return json.dumps(message) 
 
+	if result:
+		return redirect(url_for('match_font'))
 	
 	# http%3A%2F%2Fwww.flickr.com%2Fphotos%2graciferwong%29466743943%2F 
 	# hello_world.jpg:http://www.flickr.com/photos/graciferwong/9466743943/
@@ -38,15 +51,20 @@ def send_image():
 	
 @app.route ('/match_font', methods = ['GET'])
 def match_font():
-	my_font = match_letter.main()
+	my_font = ranked_match.main()
 	result = json.dumps(my_font)
 	return result 
 
+@app.route ('/')
+def home():
+	return render_template('index.html')
+
 @app.route ('/index', methods = ['GET'])
 def index():
-	message = "Welcome to font match."
+	message = "Welcome to FontSeeker"
 	result = json.dumps(message)
 	return result 
+
 
 if __name__ == '__main__':
 	app.run(debug = True)
