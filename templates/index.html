@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+    
+    <meta charset="UTF-8">
+    <title>FontSeeker</title>
+    <link rel="stylesheet" type="text/css" href="static/stylesheet.css"/> 
+
+</head>
+
+
+<body>
+    <div id='wrapper' class='container'>
+
+        <nav>
+        <img src="static/images/logo.png">
+        <img src="static/images/bear_telescope_cropped.png" class="logo">
+        </nav>
+
+        <div>
+          
+            <form action="/send_image" class="image-form">
+            <input type="text" name="img" placeholder="Image URL" class="image-url">
+<!-- <textarea name="Message" rows="20" cols="20" onfocus="this.value=''; this.onfocus=null;">Hint goes here.</textarea> -->
+      <!-- <input type="text" name="foo" placeholder="test"> -->
+            <input type="submit" value="Submit" class="btn btn-large" id="img_submit">
+            </form>
+        </div>
+
+
+        <div id="results" class="container">
+        <h1 class="message"></h1>
+
+        </div>
+
+
+        <div id="main" class="container">
+            <img src="static/images/danish_bw.png" class="hidden container" />Main image goes here
+        </div>
+  
+        <div id="picture">
+        </div>
+ 
+    
+
+
+        <footer>
+          <p><a href="http://www.hackbrightacademy.com">Made at Hackbright Academy.</a></p>
+        </footer>
+
+    </div>
+ 
+ 
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <script>
+    $("#img_submit").click("submit", function (event) {//begin request
+      event.preventDefault();
+      var $form = $(".image-form");
+ 
+      $.ajax({
+        url: $form.attr("action"),  //linked to form action=/send_image 
+        data: $form.serialize(), // encode form elements as string
+        dataType: "html", // or     //how to send the object to server
+        dataType: "json",
+        
+        beforeSend: function () { 
+
+            $("#results").html('<img src="static/images/ajax-loader.gif" class="container"/>');
+          
+          // show loading animation 
+        },
+        success: function (data) {
+
+
+          // show result
+             // $("#results").html('<img src="static/images/bodoni_beautiful.jpg" />');
+
+            
+
+    
+          // $("#results").find(".success").html(data.message);
+             // $("#results").find(".message").(data.message);
+             if (data=="Oh, snap. I can't find that image. Can you try a different image?"){
+             $("#results").html(data);
+
+             }
+             else{
+                $('.hidden').hide();
+                $("#results").html(data);
+                $("#picture").html('<img src="static/images/bodoni_beautiful.jpg" />');
+
+
+                    // '<img src="static/images/bodoni_beautiful.jpg" />');
+             }
+              
+
+        },
+        
+        // if response status is not 200
+        error: function (response) {
+          // show an error message
+          $("#results").html(response.responseText); // returns response from server as string
+        }
+      });
+    });
+  </script>
+
+</body>
+
+</html>
