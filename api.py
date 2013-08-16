@@ -51,8 +51,27 @@ def send_image():
 	
 @app.route ('/match_font', methods = ['GET'])
 def match_font():
-	my_font = ranked_match.main()
-	result = json.dumps(my_font)
+	my_font = ranked_match.main() # returns a list of strings
+	print "This is how my_font is returned", my_font
+
+	font_result = {}
+	if len(my_font) == 1: #if there is only one result
+		font_result["success"] = True
+		font_result["multiple"] = False
+		for item in my_font:
+			font_result["font_name"] = item[0]
+			font_result["difference_value"] = item[1]
+			# font_result["difference_value"] = value
+
+	if len(my_font) == 0:
+		font_result["success"] = False
+		font_result["multiple"] = False 
+
+	if len(my_font) > 1:
+		font_result["multiple"] = True
+		print "This is font_result dictionary:", font_result.items()
+
+	result = json.dumps(font_result)
 	return result 
 
 @app.route ('/')
