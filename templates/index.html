@@ -14,9 +14,10 @@
     <div id="wrapper">
 
     
-        <nav class="container">
+        <nav>
             <img src="static/images/bear_telescope_cropped.png" class="logo">
             <img src="static/images/logo.png">
+
         </nav>
      
 
@@ -24,23 +25,21 @@
 
         <div id="wrapper">
             <form action="/send_image" class="image-form">
-            <input type="text" name="img" placeholder="http://www.myimageurl" class="image-url">
+            <input type="text" name="img" placeholder="http://www.yourimage/url" class="image-url">
             <input type="submit" value="Submit" class="btn btn-large" id="img_submit">
             </form>
         </div>
 
 
-        <div id="results" class="container">
-            <h1 class="message"></h1>
+        <div id="results">
         </div>
-        
-        <div id="waiting">
-        </div>
+    
+    
 
         <div class="container">
-            <!-- <img src="static/images/danish_bw.png" class="hidden container" />Main image goes here -->
             <img src="static/images/bear_unhappy.png">
         </div>
+
 
 
         <footer>
@@ -71,8 +70,10 @@
         
         beforeSend: function () { 
             $form.trigger("loading");
-          
-            $("#results").html("I'm working on your request. Please hold.")
+
+            $("#results").html("I'm working on your request. Please hold on...").append( '<br><br><img src="static/images/ajax-loader.gif"/>');
+
+         
 
 
             // $("#results").html('<img src="static/images/ajax-loader.gif" class="container"/>');
@@ -86,15 +87,31 @@
              // $("#results").html('<img src="static/images/bodoni_beautiful.jpg" />');
           // $("#results").find(".success").html(data.message);
              // $("#results").find(".message").(data.message);
+          
              if (data == "Oh, snap. I can't find that image. Can you try a different image?") {
                 $("#results").html(data);
+            
 
-             } else {
+             } 
 
-               
+             if (data.success==true) {
+                 $("#results").html("Match found! The closest font to your sample is " + data.font_name +"." + "\n" + "I leave you with some Zen of Python written in " +data.font_name+ ":").append('<img src="static/specimens/' + data.font_name + '.png" />');
+            
+
+             }  
+
+             if (data.success==false) {
+
+                $("#results").html("Hmm, I wasn't able to find a good match. It makes me sad.");
+
+
+                // $("#results").html("Match found! The closest font to your sample is " + data.font_name +"." + "\n" + "Here's a specimen of " +data.font_name+ ":").append('<img src="static/specimens/' + 'Aaargh' + '.png" />');
+            
+
+
                 // $('.hidden').hide();
-                $("#results").html('Match found! The closest font to your sample is ' + data.font_name).append('<img src="static/specimens/' + data.font_name + '.png" />');
-                $("#picture").html('<img src="static/images/bodoni_beautiful.jpg" />');
+                // $("#results").html('Match found! The closest font to your sample is ' + data.font_name).append('<img src="static/specimens/' + data.font_name + '.png" />');
+                // $("#picture").html('<img src="static/images/bodoni_beautiful.jpg" />');
 
 
              }
