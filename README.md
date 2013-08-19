@@ -6,14 +6,13 @@ PIP install PIL, numpy, scipy<br>
 Install pygame from source <br>
 
 <h2>Overview:</h2>
-Have you ever walked by a poster or sign and wanted to know what font the designer used? That happens to me a lot and it’s how this project came to be. FontSeeker was envisoned to be a Shazam for fonts identification. It takes an image, segments it into glyphs and uses a template-based approach to make a match against a database of font samples (currently just over 100) collected from Font Squirrel and fonts I already owned. FontSeeker was built with Python, Flask, PIL, SimpleCV and SQLAlchemy and uses AJAX on the front end. 
+Have you ever walked by a poster or sign and wanted to know what font the designer used? That happens to me a lot and it’s how this project came to be. FontSeeker was envisoned to be a Shazam for font identification. It takes an image, segments it into glyphs and uses a template-based approach to make a match against a database of font samples (currently just over 100) collected from Font Squirrel and fonts I already owned. FontSeeker was built with Python, Flask, PIL, SimpleCV and SQLAlchemy and uses AJAX on the front end. 
 
 <h2>File Tree:</h2>
-(source_fonts.py): Downloads font files from the FontSquirrel API. 
-(draw_fonts.py): Uses PIL to draw lowercase and uppercase templates of each font, the OCR alphabet and specimen messages to return to user upon successful match.
-(process_images.py): Uses SimpleCV to crop an image to bounds and resize it to a fixed size while maintaining its aspect ratio.
-(model.py and seed.py): Creates schema for database and loads fonts, font templates and OCR training letters into database.
-(get_segments.py): Converts an image into a binary image and crops the image in locations where all-white columns are identified.
+(draw_fonts.py): Uses PIL to draw lowercase and uppercase templates of each font, the OCR alphabet and specimen messages to return to user upon successful match.<br>
+(process_images.py): Uses SimpleCV to crop an image to bounds and resize it to a fixed size while maintaining its aspect ratio.<br>
+(model.py and seed.py): Creates schema for database and loads fonts, font templates and OCR training letters into database.<br>
+(get_segments.py): Converts an image into a binary image and crops the image in locations where all-white columns are identified.<br>
 ranked_match: Segmented user images are compared against OCR alphabet and given a letter classification. Each segment is then compared against all the fonts for that letter classification. If the XOR difference meets a certain threshold, it is added to a font table. Fonts are then ranked based on the lowest average XOR difference and frequency of matches made.
 
 <h2>Template-based Approach</h2>
