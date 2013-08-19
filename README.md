@@ -17,7 +17,7 @@ Have you ever walked by a poster or sign and wanted to know what font the design
 
 <h2>User Interface:</h2>
 The front end uses HTML5, CSS and uses Javascript to make an asynchronous call to the server. <br>
-[Alt text] "https://github.com/gwongz/font_seeker/blob/master/screenshots/fontseeker.png"
+![Alt text](/screenshots/fontseeker.png "User interface")
 
 <h2>Template-based Approach</h2>
 
