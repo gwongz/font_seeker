@@ -8,10 +8,10 @@ Have you ever walked by a poster or sign and wanted to know what font the design
 - process_images.py: Uses SimpleCV to crop an image to bounds and resize it to a fixed size while maintaining its aspect ratio.<br>
 - model.py and seed.py: Creates schema for database and loads fonts, font templates and OCR training letters into database.<br>
 - get_segments.py: Converts an image into a binary image and crops the image in locations where all-white columns are identified.<br>
-- ranked_match.py: Segmented user images are compared against OCR alphabet and given a letter classification. Each segment is then compared against all the fonts for that letter classification. If the XOR difference meets a certain threshold, it is added to a font table. Fonts are then ranked based on the lowest average XOR difference and frequency of matches made.
+- ranked_match.py: Segmented user images are compared against OCR alphabet and given a letter classification. Each segment is then compared against all the fonts for that letter classification. If the XOR difference meets a certain threshold, it is added to a font table. Fonts are then ranked based on the lowest average XOR difference.
 
 ###User Interface
-The front end uses HTML5, CSS and uses Javascript to make an asynchronous call to the server. <br>
+The front end uses HTML5 and CSS. It uses Javascript to make an asynchronous call to the server. <br>
 ![Alt text](/screenshots/fontseeker.png "User interface")
 
 ###Template-based Approach
@@ -20,22 +20,21 @@ Imaging libraries such as SimpleCV have powerful tools for extracting features f
 
 Since an image can be converted to a 2D array of black and white pixels, character and font recognition can be made by performing a pixel-by-pixel comparison between input glyphs and template glyphs once segmentation has occurred. 
 
-Matching has a Big O time of 2 O(n^2) which is not ideal. I refactored the code to speed up the run time - comparing each segment to OCR and then to the font and breaking out of the loop once a certain font had been matched at least n times - but this sacrificed matching accuracy. 
+Currently the process time isn't ideal but I've been working on refactoring the code to reduce the number of wasteful matches during font comparison. For instance, the latest version:
 
-To get the best OCR match, I decided that a full pass through the alphabet was needed. Once that decision was made, optimization efforts were focused on how to reduce wasteful matches during font comparison. To improve run time, I refactored the code to:
-
-- throw out segments which had high OCR XOR difference value 
-- skip font matches when the letter is likely to cause more errors than its removal would (e.g., segments identified as a “I, i, or l”)
-- process more image data before matching occurs. The number of black pixels in each template image can be calculated and loaded in the database before the match process begins. That way, if a font template’s black pixels aren’t within a certain range of the segment, the XOR comparison is skipped.
+- throws out segments which have a high OCR XOR difference value 
+- skips font matches when the letter is likely to cause more errors than its removal would (e.g., segments identified as a "I", "i", or "l")
+- process more image data before matching occurs. The number of black pixels in each template image can be calculated and loaded in the database before the match process begins. That way, if a font template's black pixels aren't within a certain range of the segment, the XOR comparison is skipped.
 
 
 ###Final Thoughts
 
-Using templates to make a match is a straightforward approach and can be successful. But when the input data varies greatly from the training data it doesn’t work very well. One of the biggest limitations of my program is that it only uses one sans-serif alphabet for the OCR comparison and requires white space between glyphs for segmentation. 
+Using templates can be successful. But when the input data varies greatly from the training data it doesn’t work very well. One of the biggest limitations of my program is that it uses a single sans-serif alphabet for the OCR comparison and requires white space between glyphs for segmentation. If an input image varies greatly from this alphabet, character recognition is flawed, which ultimately affects the font match. 
 
-If an input image varies greatly from this alphabet, character recognition is flawed, which ultimately affects the font match. In the next stage, I could train the OCR with more alphabets or use a OCR engine like Tesseract or OCRopus. But character recognition is ultimately something that humans are much better at than computers, which makes me think that for font matching purposes, it would be more efficient to have the user input the letters to be compared when they submit their image.
+In the next iteration, I'm interesed in using topological feature analysis to classify letters. By reducing a character to its most basic structure (i.e., open areas, closed shapes, diagonal lines) the input glyph could then be compared against these measurements and classified accordingly. Incorporating a feature that allows the program to learn from user feedback would also improve the OCR match. 
 
-When it comes to font matching, in my next iteration I’d like to take a statistical approach, which would improve processing time and be more robust when it comes to making matches. By extracting additional features such as aspect ratio and area, it would be possible to break down an image into a simple signature. Then the input glyph could be compared against these measurements and classified accordingly. 
+I'd also like to expand the range of quality of the images that can be processed. I plan to do this by improving thresholding and introducing noise reduction and skew detection. 
+
 
 
 
