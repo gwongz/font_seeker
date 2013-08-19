@@ -1,14 +1,14 @@
-<h1>Installation notes:</h1>
+<h2>Installation notes:</h2>
 
 Install SimpleCV from source<br>
 Brew install OpenCV<br>
 PIP install PIL, numpy, scipy<br>
 Install pygame from source <br>
 
-<h1>Overview:</h1>
+<h2>Overview:</h2>
 Have you ever walked by a poster or sign and wanted to know what font the designer used? That happens to me a lot and it’s how this project came to be. FontSeeker was envisoned to be a Shazam for fonts identification. It takes an image, segments it into glyphs and uses a template-based approach to make a match against a database of font samples (currently just over 100) collected from Font Squirrel and fonts I already owned. FontSeeker was built with Python, Flask, PIL, SimpleCV and SQLAlchemy and uses AJAX on the front end. 
 
-<h1>File Tree:</h1>
+<h2>File Tree:</h2>
 (source_fonts.py): Downloads font files from the FontSquirrel API. 
 (draw_fonts.py): Uses PIL to draw lowercase and uppercase templates of each font, the OCR alphabet and specimen messages to return to user upon successful match.
 (process_images.py): Uses SimpleCV to crop an image to bounds and resize it to a fixed size while maintaining its aspect ratio.
@@ -16,7 +16,7 @@ Have you ever walked by a poster or sign and wanted to know what font the design
 (get_segments.py): Converts an image into a binary image and crops the image in locations where all-white columns are identified.
 ranked_match: Segmented user images are compared against OCR alphabet and given a letter classification. Each segment is then compared against all the fonts for that letter classification. If the XOR difference meets a certain threshold, it is added to a font table. Fonts are then ranked based on the lowest average XOR difference and frequency of matches made.
 
-<h1>Template-based Approach</h1>
+<h2>Template-based Approach</h2>
 
 Imaging libraries such as SimpleCV have powerful tools for extracting features from images, but I hadn’t worked with images before so I decided to start with basic template matching — the most straightforward approach to symbol recognition. 
 
@@ -31,7 +31,7 @@ To get the best OCR match, I decided that a full pass through the alphabet was n
 - process more image data before matching occurs. The number of black pixels in each template image can be calculated and loaded in the database before the match process begins. That way, if a font template’s black pixels aren’t within a certain range of the segment, the XOR comparison is skipped.
 
 
-<h1>Final Thoughts:</h1>
+<h2>Final Thoughts:</h2>
 
 Using templates to make a match is a straightforward approach and can be successful. But when the input data varies greatly from the training data it doesn’t work very well. One of the biggest limitations of my program is that it only uses one sans-serif alphabet for the OCR comparison and requires white space between glyphs for segmentation. 
 
