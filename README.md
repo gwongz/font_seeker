@@ -15,6 +15,10 @@ Have you ever walked by a poster or sign and wanted to know what font the design
 - get_segments.py: Converts an image into a binary image and crops the image in locations where all-white columns are identified.<br>
 - ranked_match.py: Segmented user images are compared against OCR alphabet and given a letter classification. Each segment is then compared against all the fonts for that letter classification. If the XOR difference meets a certain threshold, it is added to a font table. Fonts are then ranked based on the lowest average XOR difference and frequency of matches made.
 
+<h2>User Interface:</h2>
+The front end uses HTML5, CSS and uses Javascript to make an asynchronous call to the server. <br>
+<a href="https://github.com/gwongz/font_seeker/blob/master/screenshots/fontseeker.png"</a>
+
 <h2>Template-based Approach</h2>
 
 Imaging libraries such as SimpleCV have powerful tools for extracting features from images, but I hadn’t worked with images before so I decided to start with template matching to understand the basic mechanics of image processing.
