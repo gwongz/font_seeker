@@ -17,7 +17,7 @@ File Tree:
 ranked_match: Segmented user images are compared against OCR alphabet and given a letter classification. Each segment is then compared against all the fonts for that letter classification. If the XOR difference meets a certain threshold, it is added to a font table. Fonts are then ranked based on the lowest average XOR difference and frequency of matches made.
 
 
-Template-based Approach
+<h1>Template-based Approach</h1>
 
 Imaging libraries such as SimpleCV have powerful tools for extracting features from images, but I hadn’t worked with images before so I decided to start with basic template matching — the most straightforward approach to symbol recognition. 
 
