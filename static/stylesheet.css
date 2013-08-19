@@ -64,6 +64,13 @@ a        { color:#666; text-decoration:none; }
 	padding-top: 80px;
 }
 
+#social{
+	float: left;
+	padding-top: 20px;
+	padding-right: 15px;
+
+}
+
 .specimen{
 	float: right;
 	width: 60%;
