@@ -37,7 +37,7 @@ def make_constrained(srcdir):
 				name = str(file_url)
 				try:
 					img = cv.Image(location).binarize()
-					adaptimg = img.adaptiveScale((100, 100), cv.Color.WHITE)
+					adaptimg = img.adaptiveScale((40, 40), cv.Color.WHITE)
 
 					# adaptimg = img.adaptiveScale((20, 20), cv.Color.WHITE)
 					adaptimg.save(name)
@@ -47,12 +47,16 @@ def make_constrained(srcdir):
 					
 
 
+
 def main():
 
-	# crop_at_bounds(srcdir='ocr_alphabet')
-	# crop_at_bounds(srcdir='font_letters')
+	crop_at_bounds(srcdir='ocr_alphabet')
+	crop_at_bounds(srcdir='font_letters')
 	make_constrained(srcdir='ocr_alphabet')
 	make_constrained(srcdir='font_letters')
+
+
+
 
 if __name__ == "__main__":
 	main()
