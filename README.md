@@ -1,24 +1,16 @@
 FontSeeker
 ==========
 
-<h2>Installation notes:</h2>
-
-Install SimpleCV from source<br>
-Brew install OpenCV<br>
-PIP install PIL, numpy, scipy<br>
-Install pygame from source <br>
-
-###Overview
 Have you ever walked by a poster or sign and wanted to know what font the designer used? That happens to me a lot and it’s how this project came to be. FontSeeker was envisoned to be a Shazam for font identification. It takes an image, segments it into glyphs and uses a template-based approach to make a match against a database of font samples (currently just over 100) collected from Font Squirrel and fonts I already owned. FontSeeker was built with Python, Flask, PIL, SimpleCV and SQLAlchemy and uses AJAX on the front end. 
 
-###File Tree:
+###File Tree
 - draw_fonts.py: Uses PIL to draw lowercase and uppercase templates of each font, the OCR alphabet and specimen messages to return to user upon successful match.<br>
 - process_images.py: Uses SimpleCV to crop an image to bounds and resize it to a fixed size while maintaining its aspect ratio.<br>
 - model.py and seed.py: Creates schema for database and loads fonts, font templates and OCR training letters into database.<br>
 - get_segments.py: Converts an image into a binary image and crops the image in locations where all-white columns are identified.<br>
 - ranked_match.py: Segmented user images are compared against OCR alphabet and given a letter classification. Each segment is then compared against all the fonts for that letter classification. If the XOR difference meets a certain threshold, it is added to a font table. Fonts are then ranked based on the lowest average XOR difference and frequency of matches made.
 
-###User Interface:
+###User Interface
 The front end uses HTML5, CSS and uses Javascript to make an asynchronous call to the server. <br>
 ![Alt text](/screenshots/fontseeker.png "User interface")
 
@@ -32,12 +24,12 @@ Matching has a Big O time of 2 O(n^2) which is not ideal. I refactored the code 
 
 To get the best OCR match, I decided that a full pass through the alphabet was needed. Once that decision was made, optimization efforts were focused on how to reduce wasteful matches during font comparison. To improve run time, I refactored the code to:
 
-- throw out segments which had a low OCR XOR difference value above 0.2
+- throw out segments which had high OCR XOR difference value 
 - skip font matches when the letter is likely to cause more errors than its removal would (e.g., segments identified as a “I, i, or l”)
 - process more image data before matching occurs. The number of black pixels in each template image can be calculated and loaded in the database before the match process begins. That way, if a font template’s black pixels aren’t within a certain range of the segment, the XOR comparison is skipped.
 
 
-###Final Thoughts:
+###Final Thoughts
 
 Using templates to make a match is a straightforward approach and can be successful. But when the input data varies greatly from the training data it doesn’t work very well. One of the biggest limitations of my program is that it only uses one sans-serif alphabet for the OCR comparison and requires white space between glyphs for segmentation. 
 
