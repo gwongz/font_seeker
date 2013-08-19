@@ -12,16 +12,16 @@ Have you ever walked by a poster or sign and wanted to know what font the design
 - draw_fonts.py: Uses PIL to draw lowercase and uppercase templates of each font, the OCR alphabet and specimen messages to return to user upon successful match.<br>
 - process_images.py: Uses SimpleCV to crop an image to bounds and resize it to a fixed size while maintaining its aspect ratio.<br>
 - model.py and seed.py: Creates schema for database and loads fonts, font templates and OCR training letters into database.<br>
--get_segments.py: Converts an image into a binary image and crops the image in locations where all-white columns are identified.<br>
+- get_segments.py: Converts an image into a binary image and crops the image in locations where all-white columns are identified.<br>
 - ranked_match.py: Segmented user images are compared against OCR alphabet and given a letter classification. Each segment is then compared against all the fonts for that letter classification. If the XOR difference meets a certain threshold, it is added to a font table. Fonts are then ranked based on the lowest average XOR difference and frequency of matches made.
 
 <h2>Template-based Approach</h2>
 
-Imaging libraries such as SimpleCV have powerful tools for extracting features from images, but I hadn’t worked with images before so I decided to start with basic template matching — the most straightforward approach to symbol recognition. 
+Imaging libraries such as SimpleCV have powerful tools for extracting features from images, but I hadn’t worked with images before so I decided to start with template matching to understand the basic mechanics of image processing.
 
 Since an image can be converted to a 2D array of black and white pixels, character and font recognition can be made by performing a pixel-by-pixel comparison between input glyphs and template glyphs once segmentation has occurred. 
 
-Template matching, however, is a slow process. The matching program I wrote has a Big O time of 2 O(n^2) which is far from ideal. I refactored the code to speed up the run time - comparing each segment to OCR and then to the font and breaking out of the loop once a certain font had been matched at least n times - but this sacrificed matching accuracy. 
+Matching has a Big O time of 2 O(n^2) which is not ideal. I refactored the code to speed up the run time - comparing each segment to OCR and then to the font and breaking out of the loop once a certain font had been matched at least n times - but this sacrificed matching accuracy. 
 
 To get the best OCR match, I decided that a full pass through the alphabet was needed. Once that decision was made, optimization efforts were focused on how to reduce wasteful matches during font comparison. To improve run time, I refactored the code to:
 
