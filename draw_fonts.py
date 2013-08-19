@@ -1,6 +1,7 @@
 import os
 import re 
 import string
+import random 
 import shutil
 from PIL import Image, ImageOps, ImageFont, ImageDraw, ImageChops
 
@@ -24,7 +25,9 @@ def make_letter_samples(srcdir, destdir):
 	
 		fontpath = os.path.join(srcdir, f)
 		fullname = f.split('.')[0]
+
 		font_name = re.sub('-webfont', '', fullname)
+		font_name = re.sub('__', '', font_name)
 
 		# full_name = f.split('.')[0:-1]
 		# if '-' in full_name:
@@ -60,8 +63,8 @@ def make_letter_samples(srcdir, destdir):
 
 def draw_lower(fontpath, font_directory):
 
-	W, H = 100, 100
-	font = ImageFont.truetype(fontpath, 75)
+	W, H = 250, 250
+	font = ImageFont.truetype(fontpath, 125)
 
 	lower_directory = os.path.join(font_directory, 'lower')
 	print "This is the lower_directory:", lower_directory
@@ -81,8 +84,8 @@ def draw_lower(fontpath, font_directory):
 
 def draw_upper(fontpath, font_directory):
 
-	W, H = 100, 100
-	font = ImageFont.truetype(fontpath, 75)
+	W, H = 250, 250
+	font = ImageFont.truetype(fontpath, 125)
 
 	upper_directory = os.path.join(font_directory, 'upper')
 	
@@ -99,13 +102,45 @@ def draw_upper(fontpath, font_directory):
 
 		new_img = img.save(letterpath)
 
+def draw_specimens(srcdir):
+	msgs = ["Beautiful is better than ugly", "Explicit is better than implicit", "Simple is better than complex", "Flat is better than nested", "Sparse is better than dense"]
+	
+	ttfs = os.listdir(srcdir)
 
+	if '.DS_Store' in ttfs:
+		ttfs.remove('.DS_Store')
 
+	destdir = 'static/specimens'
+	W, H = 629, 100
 
+	for f in ttfs:
+		try:
+			fontpath = os.path.join(srcdir, f)
+			font = ImageFont.truetype(fontpath, 30)
+
+			font_name = f.split('.')[0]
+			font_split = re.sub('__', '', font_name)
+			clean_name = re.sub('-webfont', '', font_split)
+			
+			message = random.choice(msgs)
+			img = Image.new('RGBA', (W,H), (0,0,0,0,))	
+			draw = ImageDraw.Draw(img)
+			w, h = draw.textsize(message, font=font)
+			
+		
+			print "This is the w, h:", w, h # centers the text 
+			draw.text(((W-w)/2, (H-h)/2), message, font=font, fill='black')			
+			destpath = os.path.join(destdir, clean_name)
+			# transparent = img.convert_alpha()
+			new_img = img.save(destpath+'.png')
+		except:
+			print "There was an error with this font: ", f
+	
 def main():
 
-	# make_letter_samples(srcdir='ocr_font_files', destdir='ocr_alphabet')
+	make_letter_samples(srcdir='ocr_font_files', destdir='ocr_alphabet')
 	make_letter_samples(srcdir='font_files', destdir='font_letters')
+	draw_specimens(srcdir='font_files')
 
 
 
