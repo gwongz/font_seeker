@@ -9,18 +9,14 @@ engine = create_engine('sqlite:///fonts.db', echo=True)
 session = scoped_session(sessionmaker(bind=engine,
 									autocommit=False,
 									autoflush=False))
-# do I need session if I'm not going to be connecting to webapp?
 
 Base = declarative_base()
 Base.query = session.query_property()
 
-# Class declarations
 class Font(Base):
 	__tablename__ = 'fonts'
 	id = Column(Integer, primary_key = True, autoincrement = True)
 	name = Column(String(100))
-	family = Column(String(100))
-
 
 class OCR_Letter(Base):
 	__tablename__ = 'ocr_letters'
@@ -49,20 +45,6 @@ class Letter(Base):
 	font = relationship('Font', backref=backref('fonts', order_by=id))
 
 
-class Letter_Feature(Base):
-	__tablename__ = 'letter_features'
-
-	id = Column(Integer, primary_key = True, autoincrement = True)
-	file_url = Column(String(150))
-	value = Column(Integer)
-	blob_radius = Column(Float)
-	blob_area = Column(Float)
-	aspect_ratio = Column(Float)
-
-	font_name = Column(Integer, ForeignKey('fonts.name'))
-	font = relationship('Font', backref=backref('font', order_by=id))
-
-
 class User_Image(Base):
 	__tablename__ = 'user_images'
 
@@ -71,7 +53,6 @@ class User_Image(Base):
 	width = Column(Integer)
 	height = Column(Integer)
 	aspect_ratio = Column(Float)
-
 	black_pixels = Column(Integer)
 
 	ocr_letter_black_pixels = Column(Integer, ForeignKey('ocr_letters.black_pixels'))
@@ -81,22 +62,8 @@ class User_Image(Base):
 	letter = relationship('Letter', backref = backref('letters', order_by=id))
 
 
-
-
-
-class User_Feature(Base):
-	__tablename__ = 'user_features'
-
-	id = Column(Integer, primary_key = True, autoincrement = True)
-	file_url = Column(String(150))
-	blob_radius = Column(Float)
-	blob_area = Column(Float)
-	aspect_ratio = Column(Float)
-
-
 def main():
 	Base.metadata.create_all(engine)
-	# change to pass after tables created the first time 
 
 if __name__ == "__main__":
 	main()
