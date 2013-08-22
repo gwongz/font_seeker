@@ -149,7 +149,7 @@ def get_segments(slices, height, img):
 		else:
 			break
 
-	return segments # returns list of all the cropped and segmented imgs
+	return segments 
 
 def main(img_url):
 
@@ -165,18 +165,17 @@ def main(img_url):
 	y_bounds = scan_image(width, height, columns)
 	segments = get_segments(y_bounds, height, img)
 
-	if len(segments) <= 1 or None:
-		message = "Oh, snap. I can't segment your image. Want to try another image where the text is more spaced out?"
+	# if len(segments) <= 1 or None:
+	# 	message = "Oh, snap. I can't segment your image. Want to try another image where the text is more spaced out?"
 
 
-	else:
-		message = "Your image has been segmented. Now let's process it."
+	# else:
+	# 	message = "Your image has been segmented. Now let's process it."
 	
 	
 	os.remove(imgname)
-	return message
+	return segments
 
-	# segments is a list of all the cropped segments
 
 
 if __name__== "__main__":
