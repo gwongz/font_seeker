@@ -20,22 +20,11 @@ def load_image(imgname):
 	width = newimg.size[0]
 	height = newimg.size[1]
 	columns = []
+	
 	for y in range(width):
 		columns.append([pixels[y,x] for x in range(height)])
-		# column returns color at coordinate (y,x) - read as 
-		# row[4] column[0]
+	
 	os.remove('inverted.png')
-
-	# img = Image.open(imgname).convert('1')
-	# pixels = img.load()
-	# width = img.size[0]
-	# height = img.size[1]
-	# columns = []
-	# for y in range(width):
-	# 	columns.append([pixels[y,x] for x in range(height)])
-		# column returns color at coordinate (y,x) - read as 
-		# row[4] column[0]
-
 	return width, height, columns, newimg
 
 
@@ -58,23 +47,8 @@ def all_white(width, height, columns, current_col):
 
 	return current_col
 
-# def first_black_row(width, height, rows, current_row):
-# 	while current_row < height:
-# 		if rows[current_row].count(0) >= 1:
-# 			return current_row
-# 		else:
-# 			current_row += 1
-
-# def all_white_row(width, height, rows, current_row):
-# 	while current_row < height:
-# 		if rows[current_row].count(255) == width:
-# 			return current_row
-# 		else:
-# 			current_row +=1
-# 	return current_row
-
 def scan_image(width, height, columns):
-	"""Finds vertical projection of image"""
+
 	boundaries = []
 	current_col = 0
 
@@ -82,49 +56,25 @@ def scan_image(width, height, columns):
 
 		next_col = first_black(width, height, columns, current_col)
 		if next_col == None:
-			break # there is no black - prevents infinite loop 
+			break # prevents infinite loop 
 
 		if next_col != None: # if there is black, add and move on
 			boundaries.append(next_col)
 			current_col = next_col
 
 			white_col = all_white(width, height, columns, current_col) # change looking for to white
-			if white_col != None: # if there is an all white column
+			if white_col != None: 
 				boundaries.append(white_col)
 				current_col = white_col # reset starting point for scanning
-
-	# slices = [(x, 0) for x in boundaries if x!= None] # a list of tuples, (x,y) where splits are 
+ 
 	return boundaries
 
-# def get_x_bounds(width, height, rows):
-# 	boundaries = []
-# 	current_row = 0
-
-# 	while current_row < height and current_row != None:
-# 		next_row = first_black_row(width, height, rows, current_row)
-# 		if next_row == None:
-# 			break
-
-# 		if next_row != None:
-# 			boundaries.append(next_row)
-# 			current_row = next_row
-
-# 			white_row = all_white_row(width, height, rows, current_row)
-# 			if white_row != None:
-# 				boundaries.append(white_row)
-# 				current_row = white_row
-# 	print "These are the x bounds", boundaries
-# 	return boundaries 
-
 def get_segments(slices, height, img):
-	# slices = [(0,0), (1,0)]
-	# slices = [(35,0), (67,0)]
+
 	if os.path.exists('user_image'):
 		rmtree('user_image')
 
 	os.mkdir('user_image')
-
-	# need to add a fcn to clear the contents of 'user_image folder if it exists'
 
 	segments = [] 
 	n=0
@@ -142,7 +92,7 @@ def get_segments(slices, height, img):
 			segments.append(output)
 
 			letter = img.crop(box)
-			letter.save('user_image/' + output) # saves image to user_image directory as 'segment_0.png'			
+			letter.save('user_image/' + output) 
 
 			n += 2 # increment by 2 because each pair is a set of bounds
 
@@ -164,14 +114,6 @@ def main(img_url):
 
 	y_bounds = scan_image(width, height, columns)
 	segments = get_segments(y_bounds, height, img)
-
-	# if len(segments) <= 1 or None:
-	# 	message = "Oh, snap. I can't segment your image. Want to try another image where the text is more spaced out?"
-
-
-	# else:
-	# 	message = "Your image has been segmented. Now let's process it."
-	
 	
 	os.remove(imgname)
 	return segments
