@@ -30,6 +30,7 @@ def load_image(imgname):
 
 def first_black(width, height, columns, current_col):
 
+	# returns None if no columns with black pixels
 	while current_col < width:
 		if columns[current_col].count(0) >= 1:
 			return current_col	
@@ -56,6 +57,7 @@ def scan_image(width, height, columns):
 
 		next_col = first_black(width, height, columns, current_col)
 		if next_col == None:
+			print "No black pixels were found"
 			break # prevents infinite loop 
 
 		if next_col != None: # if there is black, add and move on
@@ -113,10 +115,15 @@ def main(img_url):
 	img = img_width_height_columns[3]
 
 	y_bounds = scan_image(width, height, columns)
-	segments = get_segments(y_bounds, height, img)
+
+	if y_bounds:
+		segments = get_segments(y_bounds, height, img)
 	
-	os.remove(imgname)
+	else:
+		segments = []
+		
 	return segments
+	os.remove(imgname)
 
 
 
