@@ -30,7 +30,7 @@ def send_image():
 		message = "Oh, snap. I can't find that image. Can you try a different image?"
 		return json.dumps(message) 
 
-	if len(segments) <=1:
+	if len(segments) <=1 or segments == []:
 		return "I'm sorry, I'm not able to segment this image."
 	else:
 		return redirect(url_for('match_font'))
