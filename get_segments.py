@@ -1,6 +1,7 @@
-import os, urllib
-from shutil import rmtree 
+import os
+import urllib
 from sys import argv
+
 from PIL import Image
 import SimpleCV as cv
 import requests 
@@ -8,7 +9,6 @@ import requests
 import model 
 
 """Segments image into individual characters and saves to user_image directory"""
-
 
 def load_image(imgname):
 	img = cv.Image(imgname)
@@ -23,7 +23,7 @@ def load_image(imgname):
 	
 	for y in range(width):
 		columns.append([pixels[y,x] for x in range(height)])
-	
+
 	os.remove('inverted.png')
 	return width, height, columns, newimg
 
@@ -62,11 +62,7 @@ def scan_image(width, height, columns):
 	return boundaries
 
 def get_segments(slices, height, img):
-	# if os.path.exists('user_image'):
-	# 	rmtree('user_image')
-	# os.mkdir('user_image')
 	segments = [] 
-	
 	n=0
 	for item in slices:
 		if n <= len(slices)-1: 
@@ -80,14 +76,12 @@ def get_segments(slices, height, img):
 
 			letter = img.crop(box)
 			letter.save('user_image/' + output) 
-
 			n += 2 # increment by 2 because each pair is a set of bounds
 		else:
 			break
 	return segments 
 
 def main(img_url):
-
 	r = urllib.urlretrieve(img_url, 'temp_user_img.png')
 	imgname = 'temp_user_img.png'
 
@@ -98,18 +92,13 @@ def main(img_url):
 	img = img_width_height_columns[3]
 
 	y_bounds = scan_image(width, height, columns)
-
 	if y_bounds:
-		segments = get_segments(y_bounds, height, img)
-	
+		segments = get_segments(y_bounds, height, img)	
 	else:
 		segments = []
-
 	
 	os.remove(imgname)
 	return segments
-
-
 
 if __name__== "__main__":
 	main()
