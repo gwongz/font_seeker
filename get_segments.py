@@ -121,9 +121,10 @@ def main(img_url):
 	
 	else:
 		segments = []
-		
-	return segments
+
+	
 	os.remove(imgname)
+	return segments
 
 
 
