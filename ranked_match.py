@@ -14,7 +14,14 @@ from process_images import crop_at_bounds, make_constrained
 
 """ Makes xor comparison against user segments and OCR alphabet and compares to font template """
 
-def process_user_image(directory):
+def check_for_segments(directory):
+	segments = os.listdir(directory)
+	if '.DS_Store' in segments:
+		segments.remove('.DS_Store')
+
+	return segments
+
+def process_user_image(directory, segments):
 
 	crop_at_bounds(directory)
 	make_constrained(directory)
@@ -68,7 +75,7 @@ def get_letter(user_dir, ocr_dir):
 			else:
 				ocr_dict[user_url].append(xor_of_images)				
 			
-			count +=1
+			count += 1
 	
 		# limits number of samples 
 		if len(ocr_dict.keys()) > 10:
@@ -88,7 +95,7 @@ def difference_of_images(user_img, template_img):
 
 	# performs xor match 
 	difference = [i^j for i,j in zip(user_matrix, template_matrix)]	
-	# # however many times xor returns True
+	# however many times xor returns True
 	diff = difference.count(255)
 	xor_value = diff/float(len(user_matrix))
 
@@ -197,35 +204,37 @@ def rank_fonts(font_table, best_ocr_matches):
 	if len(font_table.items()) == 1:
 		returned_matches.append(font_table.items())
 
-	if len(font_table.items()) > 1 and len(font_table.items()) < 4:
+	if len(font_table.items()) > 1:
 		returned_matches.append(averageitems[0])
-
-	if len(font_table.items()) >= 4:
-		shortlist = averageitems[0:4]
-		for item in shortlist:
-			returned_matches.append(item)
 		
 	print "This is the closest match: ", returned_matches
 	return returned_matches
 
 def main():
-	# commits user images to database
-	process_user_image('user_image')  
 	user_dir = 'user_image'
 	ocr_dir = 'ocr_alphabet/Arial'
 
-	# returns dictionary that has as values: list of ALL xor matches per segment for lowercase
-	ocr_data = get_letter(user_dir, ocr_dir)
-	# returns dictionary that has as values: list of smallest xor difference 
-	ocr_match_dict = identify_letter(ocr_data)
-	# cut run time by only appending good matches to letter to process list	
-	letters_to_process = get_letters_to_process(user_dir, ocr_match_dict)
-	letters = letters_to_process [0]
-	user_urls = letters_to_process[1]
-	best_ocr_matches = letters_to_process[2]
+	segments = check_for_segments(user_dir)
 
-	font_table = match_font(letters, user_urls)
-	result = rank_fonts(font_table, best_ocr_matches)
+	if segments == [] or len(segments) <= 1:
+		result = []
+
+	# commits user images to database
+	else:
+		process_user_image(user_dir, segments)  
+		# returns dictionary that has as values: list of ALL xor matches per segment for lowercase
+		ocr_data = get_letter(user_dir, ocr_dir)
+		# returns dictionary that has as values: list of smallest xor difference 
+		ocr_match_dict = identify_letter(ocr_data)
+		# cut run time by only appending good matches to letter to process list	
+		letters_to_process = get_letters_to_process(user_dir, ocr_match_dict)
+		letters = letters_to_process [0]
+		user_urls = letters_to_process[1]
+		best_ocr_matches = letters_to_process[2]
+
+		font_table = match_font(letters, user_urls)
+		result = rank_fonts(font_table, best_ocr_matches)
+
 	
 	return result 
 
