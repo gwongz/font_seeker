@@ -31,6 +31,7 @@ def send_image():
 			result = json.dumps(segments)
 		
 	except IOError:
+		segments = []
 		result = json.dumps(segments)
 
 	return redirect(url_for('match_font'))

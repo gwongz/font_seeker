@@ -21,6 +21,13 @@ def check_for_segments(directory):
 
 	return segments
 
+def clear_segments(directory):
+	segments = os.listdir(directory)
+	for filename in segments:
+		location = os.path.join(directory, filename)
+		os.remove(location)
+
+
 def process_user_image(directory, segments):
 
 	crop_at_bounds(directory)
@@ -235,8 +242,12 @@ def main():
 		font_table = match_font(letters, user_urls)
 		result = rank_fonts(font_table, best_ocr_matches)
 
+	clear_segments(user_dir)
+
 	
-	return result 
+	return result
+
+	 
 
 if __name__ == "__main__":
 	main()
