@@ -42,12 +42,11 @@ def send_image():
 @app.route ('/match_font', methods = ['GET'])
 def match_font():
 
-	# returns list of strings
+	# returns list of strings, [] if no segments or matches
 	my_font = ranked_match.main() 
 
 	font_result = {}
 
-	# no matches
 	if my_font == []:
 		font_result["success"] = False
 	
