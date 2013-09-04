@@ -27,9 +27,7 @@ def load_image(imgname):
 	os.remove('inverted.png')
 	return width, height, columns, newimg
 
-
 def first_black(width, height, columns, current_col):
-
 	# returns None if no columns with black pixels
 	while current_col < width:
 		if columns[current_col].count(0) >= 1:
@@ -37,24 +35,18 @@ def first_black(width, height, columns, current_col):
 		else:
 			current_col +=1
 
-
 def all_white(width, height, columns, current_col):
-
 	while current_col < width:	
 		if columns[current_col].count(255) == height:
 			return current_col
 		else:
 			current_col +=1
-
 	return current_col
 
 def scan_image(width, height, columns):
-
 	boundaries = []
 	current_col = 0
-
 	while current_col < width and current_col != None:
-
 		next_col = first_black(width, height, columns, current_col)
 		if next_col == None:
 			print "No black pixels were found"
@@ -63,32 +55,25 @@ def scan_image(width, height, columns):
 		if next_col != None: # if there is black, add and move on
 			boundaries.append(next_col)
 			current_col = next_col
-
 			white_col = all_white(width, height, columns, current_col) # change looking for to white
 			if white_col != None: 
 				boundaries.append(white_col)
 				current_col = white_col # reset starting point for scanning
- 
 	return boundaries
 
 def get_segments(slices, height, img):
-
-	if os.path.exists('user_image'):
-		rmtree('user_image')
-
-	os.mkdir('user_image')
-
+	# if os.path.exists('user_image'):
+	# 	rmtree('user_image')
+	# os.mkdir('user_image')
 	segments = [] 
+	
 	n=0
-
 	for item in slices:
 		if n <= len(slices)-1: 
-
 			width = slices[n+1] - slices[n] # width of each crop
 			left = slices[n]
 			top = 0 
 			box = (left, top, left+width, top+height)
-
 
 			output = 'segment_%s.png' % (n)
 			segments.append(output)
@@ -97,10 +82,8 @@ def get_segments(slices, height, img):
 			letter.save('user_image/' + output) 
 
 			n += 2 # increment by 2 because each pair is a set of bounds
-
 		else:
 			break
-
 	return segments 
 
 def main(img_url):
