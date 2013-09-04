@@ -35,9 +35,6 @@ def send_image():
 
 	return redirect(url_for('match_font'))
 
-
-
-	
 	
 @app.route ('/match_font', methods = ['GET'])
 def match_font():
@@ -67,7 +64,6 @@ def home():
 @app.route ('/index', methods = ['GET'])
 def index():
 	return redirect(url_for('home'))
-
 
 if __name__ == '__main__':
 	app.run(debug = True)
