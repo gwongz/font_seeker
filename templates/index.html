@@ -1,139 +1,90 @@
 <!doctype html>
 <html lang="en">
 <head>
-
-    
     <meta charset="UTF-8">
     <title>FontSeeker</title>
     <link rel="stylesheet" type="text/css" href="static/stylesheet.css"/> 
-
 </head>
 
 <body>
     <div id="wrapper">    
-        <nav>
-            <img src="static/images/bear_telescope_cropped.png" class="logo">
-            <img src="static/images/logo.png">
-         
-        </nav>
+      <nav>
+        <img src="static/images/bear_telescope_cropped.png" class="logo">
+        <img src="static/images/logo.png">
+      </nav>
    
 
-        <div id="wrapper">
-            <form action="/send_image" class="image-form">
+      <div id="wrapper">
+          <form action="/send_image" class="image-form">
             <input type="text" name="img" placeholder="http://www.yourimageaddress" class="image-url">
             <input type="submit" value="Submit" class="btn btn-large" id="img_submit">
-            </form>
-        </div>
+          </form>
+      </div>
 
 
-        <div id="results">
-        </div>
-  
+      <div id="results">
+      </div>
 
-        <div class="container">
-            <img src="static/images/bear_unhappy.png">
-        </div>
+      <div class="container">
+          <img src="static/images/bear_unhappy.png">
+      </div>
 
-     
-      
-        <div id="social" class="addthis_toolbox addthis_32x32_style addthis_default_style">
-        <a class="addthis_button_twitter_follow" addthis:userid="gwongz"></a> </div>
+      <div id="social" class="addthis_toolbox addthis_32x32_style addthis_default_style">
+      <a class="addthis_button_twitter_follow" addthis:userid="gwongz"></a> </div>
 
-        <footer>
-           
-          <p>Made by <a href="https://github.com/gwongz">Grace Wong</a> at <a href="http://www.hackbrightacademy.com">Hackbright Academy</a>, Summer 2013.</p>
-        
-        </footer>
+      <footer>
+        <p>Made by <a href="https://github.com/gwongz">Grace Wong</a> at <a href="http://www.hackbrightacademy.com">Hackbright Academy</a>, Summer 2013.</p>
+      </footer>
 
-   </div>
+    </div>
 
   <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-52129bea051a0228"></script>
-
-        
- 
-
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
   <script>
     $(document.body).on("loading", function () {
         $("input[type=submit]").attr("disabled", true);
-    }).on("stopLoading", function () {
+        }).on("stopLoading", function () {
         $("input[type=submit]").attr("disabled", false);
     });
 
 
-    $("#img_submit").click("submit", function (event) {//begin request
-      event.preventDefault();
-      var $form = $(".image-form");
- 
+        $("#img_submit").click("submit", function (event) {//begin request
+          event.preventDefault();
+          var $form = $(".image-form");
+          console.log($form.serialize());
+
       $.ajax({
-        url: $form.attr("action"),  //linked to form action=/send_image 
-        data: $form.serialize(), // encode form elements as string
-        dataType: "html", // or     //how to send the object to server
+        url: $form.attr("action"),   
+        data: $form.serialize(), 
+        dataType: "html", 
         dataType: "json",
         
         beforeSend: function () { 
             $form.trigger("loading");
-
+            // show loading animation 
             $("#results").html("I'm working on your request. Please hold on...  ").append( '<img src="static/images/ajax-loader.gif"/>');
-
-         
-
-
-            // $("#results").html('<img src="static/images/ajax-loader.gif" class="container"/>');
-
-          
-        // show loading animation 
         },
-        success: function (data) {
-
-          // show result
-             // $("#results").html('<img src="static/images/bodoni_beautiful.jpg" />');
-          // $("#results").find(".success").html(data.message);
-             // $("#results").find(".message").(data.message);
-          
-             if (data == "Oh, snap. I can't find that image. Can you try a different image?") {
-                $("#results").html(data);
-            
-
-             } 
-
-             if (data.success==true) {
-                 $("#results").html("Match found! The closest font to your sample is " + data.font_name +"." + "\n" + "Here's a sample of " +data.font_name+ ":").append('<img src="static/specimens/' + data.font_name + '.png" />');
-            
-
+        // show result
+        success: function (data) {       
+            if (data.maybe==true) {
+                $("#results").html("Oh, snap. I can't segment this image. Can you try a different image?")
+            }
+            if (data.success==true) {
+                 $("#results").html("Match found! The closest font to your sample is " + data.font_name +"." + "\n" + "Here's a sample of " +data.font_name+ ":").append('<img src="static/specimens/' + data.font_name + '.png" class="specimen"/>');
              }  
-
              if (data.success==false) {
-
                 $("#results").html("Hmm, I wasn't able to find a good match. It makes me sad.");
-
-
-                // $("#results").html("Match found! The closest font to your sample is " + data.font_name +"." + "\n" + "Here's a specimen of " +data.font_name+ ":").append('<img src="static/specimens/' + 'Aaargh' + '.png" />');
-            
-
-
-                // $('.hidden').hide();
-                // $("#results").html('Match found! The closest font to your sample is ' + data.font_name).append('<img src="static/specimens/' + data.font_name + '.png" />');
-                // $("#picture").html('<img src="static/images/bodoni_beautiful.jpg" />');
-
-
              }
-              
-
-        },
-        
+        },        
         // if response status is not 200
         error: function (response) {
-          // show an error message
-          $("#results").html(response.responseText); // returns response from server as string
-        },
+          $("#results").html(response.responseText); 
+        },        
         complete: function () {
             $form.trigger("stopLoading");
         }
       });
     });
   </script>
-
 </body>
-
 </html>

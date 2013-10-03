@@ -169,9 +169,9 @@ def match_font(letters, user_urls):
 
 def rank_fonts(font_table, best_ocr_matches):
 
-	print "This is the font table before ranking"
+	print "This is the font table before ranking:"
 	for key, value in font_table.items():
-		print key, value, '\n'
+		print key, value, "\n"
 
 	lowest_average = OrderedDict(sorted(font_table.items(), key=lambda t: np.mean(t[1])))
 	averageitems = lowest_average.items()
