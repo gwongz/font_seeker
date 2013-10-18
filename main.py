@@ -14,13 +14,11 @@ app.secret_key = 'dfkjdsf;adlkjf;ldkfj'
 
 @app.route('/font_list', methods = ['GET'])
 def get_all_fonts():
-
 	fonts = model.session.query(model.Font.name).all()
 	return jsonify(Fonts=fonts)
 
 @app.route('/send_image', methods = ['GET'])
 def send_image():
-
 	try:
 		img_url = request.args.get('img') 
 		segments = get_segments.main(img_url)
@@ -34,7 +32,6 @@ def send_image():
 		return "I'm sorry, I'm not able to segment this image."
 	else:
 		return redirect(url_for('match_font'))
-
 
 @app.route ('/match_font', methods = ['GET'])
 def match_font():
@@ -56,13 +53,10 @@ def match_font():
 	result = json.dumps(font_result)
 	return result 
 
+@app.route('/index')
 @app.route ('/')
 def home():
 	return render_template('index.html')
-
-@app.route ('/index', methods = ['GET'])
-def index():
-	return redirect(url_for('home'))
 
 if __name__ == '__main__':
 	app.run(debug = True)
