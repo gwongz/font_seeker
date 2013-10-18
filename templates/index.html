@@ -1,42 +1,40 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>FontSeeker</title>
-    <link rel="stylesheet" type="text/css" href="static/stylesheet.css"/> 
+  <meta charset="UTF-8">
+  <title>FontSeeker</title>
+  <link rel="stylesheet" type="text/css" href="static/stylesheet.css"/> 
 </head>
 
 <body>
-    <div id="wrapper">    
-      <nav>
-        <img src="static/images/bear_telescope_cropped.png" class="logo">
-        <img src="static/images/logo.png">
-      </nav>
-   
-
-      <div id="wrapper">
-          <form action="/send_image" class="image-form">
-            <input type="text" name="img" placeholder="http://www.yourimageaddress" class="image-url">
-            <input type="submit" value="Submit" class="btn btn-large" id="img_submit">
-          </form>
-      </div>
+  <div id="wrapper">    
+    <nav>
+      <img src="static/images/bear_telescope_cropped.png" class="logo">
+      <img src="static/images/logo.png">
+    </nav>
 
 
-      <div id="results">
-      </div>
+    <form action="/send_image" class="image-form">
+      <input type="text" name="img" placeholder="http://www.yourimageaddress" class="image-url">
+      <input type="submit" value="Submit" class="btn btn-large" id="img_submit">
+    </form>
+ 
+    <div id="results"></div>
 
-      <div class="container">
-          <img src="static/images/bear_unhappy.png">
-      </div>
-
-      <div id="social" class="addthis_toolbox addthis_32x32_style addthis_default_style">
-      <a class="addthis_button_twitter_follow" addthis:userid="gwongz"></a> </div>
-
-      <footer>
-        <p>Made by <a href="https://github.com/gwongz">Grace Wong</a> at <a href="http://www.hackbrightacademy.com">Hackbright Academy</a>, Summer 2013.</p>
-      </footer>
-
+    <div class="container">
+      <img src="static/images/bear_unhappy.png">
     </div>
+
+    <div id="social" class="addthis_toolbox addthis_32x32_style addthis_default_style">
+      <a class="addthis_button_twitter_follow" addthis:userid="gwongz"></a> 
+    </div>
+
+    <footer>
+      <p>Made by <a href="https://github.com/gwongz">Grace Wong</a> at 
+      <a href="http://www.hackbrightacademy.com">Hackbright Academy</a>, Summer 2013.</p>
+    </footer>
+
+  </div><!-- end wrapper -->
 
   <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-52129bea051a0228"></script>
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
@@ -46,25 +44,26 @@
         }).on("stopLoading", function () {
         $("input[type=submit]").attr("disabled", false);
     });
-
-
-        $("#img_submit").click("submit", function (event) {//begin request
+        // prevent page refresh - defaults to ajax request
+        $("#img_submit").click("submit", function (event) {
           event.preventDefault();
           var $form = $(".image-form");
-          console.log($form.serialize());
 
       $.ajax({
-        url: $form.attr("action"),   
+        // get action value of form element 
+        url: $form.attr("action"),
+        // encodes form elements as string for submission   
         data: $form.serialize(), 
+        // treat response as json object or html
         dataType: "html", 
         dataType: "json",
         
+        // event triggered before ajax request is started 
         beforeSend: function () { 
             $form.trigger("loading");
-            // show loading animation 
             $("#results").html("I'm working on your request. Please hold on...  ").append( '<img src="static/images/ajax-loader.gif"/>');
         },
-        // show result
+        // called when request is successful
         success: function (data) {       
             if (data.maybe==true) {
                 $("#results").html("Oh, snap. I can't segment this image. Can you try a different image?")
